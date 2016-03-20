@@ -1,0 +1,3 @@
+# LasIO
+
+[![Build Status](https://travis-ci.org/visr/LasIO.jl.svg?branch=master)](https://travis-ci.org/visr/LasIO.jl)
