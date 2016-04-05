@@ -1,6 +1,19 @@
 # the header implemented based on LAS 1.2
 # TODO: check compatibility other LAS versions
 
+#=
+COMPATIBILITY WITH LAS 1.2:
+One unavoidable change has been made to the Public Header Block; Start of Waveform
+Data Packet Record. This long, long has been added to the end of the block and thus
+little or no change will be needed in LAS 1.2 readers that do not need waveform data.
+There are no changes to Point Data Record types 0 through 3. The waveform encoded
+data types have been added as Point Data Record types 4 and 5.
+
+THE ADDITIONS OF LAS 1.4 INCLUDE:
+Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only legacy
+content
+=#
+
 type LasHeader
     file_source_id::UInt16
     global_encoding::UInt16
