@@ -173,5 +173,11 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.y_min)
     write(io, h.z_max)
     write(io, h.z_min)
+    lasversion = VersionNumber(h.version_major, h.version_minor)
+    if lasversion >= v"1.3"
+        write(io, 0x0000) # Start of waveform data record (unsupported)
+    end
+    # note that for LAS 1.4 a few new parts need to be written
+    # possibly introduce typed headers like the points
     nothing
 end
