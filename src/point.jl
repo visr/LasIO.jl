@@ -226,9 +226,9 @@ function Base.write(io::IO, p::LasPoint2)
     write(io, p.scan_angle)
     write(io, p.user_data)
     write(io, p.point_source_id)
-    write(io, p.red)
-    write(io, p.green)
-    write(io, p.blue)
+    write(io, reinterpret(UInt16, p.red))
+    write(io, reinterpret(UInt16, p.green))
+    write(io, reinterpret(UInt16, p.blue))
     nothing
 end
 
@@ -243,9 +243,9 @@ function Base.write(io::IO, p::LasPoint3)
     write(io, p.user_data)
     write(io, p.point_source_id)
     write(io, p.gps_time)
-    write(io, p.red)
-    write(io, p.green)
-    write(io, p.blue)
+    write(io, reinterpret(UInt16, p.red))
+    write(io, reinterpret(UInt16, p.green))
+    write(io, reinterpret(UInt16, p.blue))
     nothing
 end
 
