@@ -62,6 +62,12 @@ immutable LasPoint3 <: LasPoint
     blue::UFixed16
 end
 
+function Base.show(io::IO, p::LasPoint)
+    z = Int(p.z)
+    cl = Int(classification(p))
+    println(io, "LasPoint(z=$z, classification=$cl)")
+end
+
 
 "X coordinate (Float64), apply scale and offset according to the header"
 xcoord(p::LasPoint, h::LasHeader) = muladd(p.x, h.x_scale, h.x_offset)

@@ -48,6 +48,10 @@ type LasHeader
     z_min::Float64
 end
 
+function Base.show(io::IO, header::LasHeader)
+    n = Int(header.records_count)
+    println(io, "LasHeader with $n points.")
+end
 
 function readstring(io, nb::Integer)
     bytes = readbytes(io, nb)

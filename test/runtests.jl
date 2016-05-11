@@ -47,13 +47,7 @@ seek(io, header.data_offset)
 close(io)
 
 headerio, pointdata = load(testfile)
-
-open(writefile, "w") do s
-    write(s, magic(format"LAS"))
-    write(s, headerio)
-    @assert headerio.n_vlr == 0  # not yet implemented
-    write(s, pointdata)
-end
+save(writefile, headerio, pointdata)
 
 rm(writefile)
 
