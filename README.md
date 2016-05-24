@@ -15,9 +15,9 @@ If the file fits into memory, it can be loaded using
 
 ```julia
 using LasIO
-header, pointdata = load("test.las")
+header, points = load("test.las")
 ```
 
-where `header` is of type `LasHeader`, and, if it is point format 3, `pointdata` is a `Vector{LasPoint3}`. `LasPoint3` is an immutable that directly corresponds to the binary data in the LAS file. Use functions like `xcoord(p::LasPoint, header::LasHeader)` to take out the desired items in the point.
+where `header` is of type `LasHeader`, and, if it is point format 3, `points` is a `Vector{LasPoint3}`. `LasPoint3` is an immutable that directly corresponds to the binary data in the LAS file. Use functions like `xcoord(p::LasPoint, header::LasHeader)` to take out the desired items in the point.
 
 See `test/runtests.jl` for other usages.
