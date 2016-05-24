@@ -2,6 +2,11 @@
 "Abstract type for ASPRS LAS point data record formats 0 - 3"
 abstract LasPoint
 
+function Base.show{T<:LasPoint}(io::IO, pointdata::Vector{T})
+    n = size(pointdata, 1)
+    println(io, "Vector{$T} with $n points.")
+end
+
 "ASPRS LAS point data record format 0"
 immutable LasPoint0 <: LasPoint
     x::Int32
@@ -71,13 +76,10 @@ end
 
 "X coordinate (Float64), apply scale and offset according to the header"
 xcoord(p::LasPoint, h::LasHeader) = muladd(p.x, h.x_scale, h.x_offset)
-xcoord(x::Int32, h::LasHeader) = muladd(x, h.x_scale, h.x_offset)
 "Y coordinate (Float64), apply scale and offset according to the header"
 ycoord(p::LasPoint, h::LasHeader) = muladd(p.y, h.y_scale, h.y_offset)
-ycoord(y::Int32, h::LasHeader) = muladd(y, h.y_scale, h.y_offset)
 "Z coordinate (Float64), apply scale and offset according to the header"
 zcoord(p::LasPoint, h::LasHeader) = muladd(p.z, h.z_scale, h.z_offset)
-zcoord(z::Int32, h::LasHeader) = muladd(z, h.z_scale, h.z_offset)
 
 
 # functions for reading the points from a stream
@@ -193,7 +195,7 @@ function Base.read(io::IO, ::Type{LasPoint3})
 end
 
 
-# functions for writing the points from to stream
+# functions for writing the points to a stream
 
 function Base.write(io::IO, p::LasPoint0)
     write(io, p.x)
@@ -272,6 +274,7 @@ function convert(::Type{Point3}, p::LasPoint, h::LasHeader)
     Point3(xcoord(p, header), xcoord(p, header), xcoord(p, header))
 end
 
+# beware of the limited precision, for instance with UTM coordinates
 function convert(::Type{Point3f0}, p::LasPoint, h::LasHeader)
     Point3f0(xcoord(p, header), xcoord(p, header), xcoord(p, header))
 end

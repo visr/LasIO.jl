@@ -24,7 +24,11 @@ export
     withheld,
     xcoord,
     ycoord,
-    zcoord
+    zcoord,
+
+    # From FileIO
+    save,
+    load
 
 include("header.jl")
 include("point.jl")

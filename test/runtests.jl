@@ -1,8 +1,8 @@
 using LasIO
-using FileIO
 using Base.Test
 
 workdir = dirname(@__FILE__)
+# source: http://www.liblas.org/samples/
 filename = "libLAS_1.2.las" # point format 0
 testfile = joinpath(workdir, filename)
 writefile = joinpath(workdir, "libLAS_1.2-out.las")
@@ -48,9 +48,10 @@ close(io)
 
 headerio, pointdata = load(testfile)
 save(writefile, headerio, pointdata)
-
+@test read(testfile) == read(writefile)
 rm(writefile)
 
+# memory mapping the point data
 open(filename) do io
     seek(io, header.data_offset)
     ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
