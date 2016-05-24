@@ -20,11 +20,11 @@ type LasHeader
     guid_1::UInt32
     guid_2::UInt16
     guid_3::UInt16
-    guid_4::ASCIIString
+    guid_4::String
     version_major::UInt8
     version_minor::UInt8
-    system_id::ASCIIString
-    software_id::ASCIIString
+    system_id::String
+    software_id::String
     creation_doy::UInt16
     creation_year::UInt16
     header_size::UInt16
@@ -89,13 +89,13 @@ function Base.showall(io::IO, h::LasHeader)
 end
 
 function readstring(io, nb::Integer)
-    bytes = readbytes(io, nb)
+    bytes = read(io, nb)
     # strip possible null bytes
     lastchar = findlast(bytes)
     ascii(bytes[1:lastchar])
 end
 
-function writestring(io, str::ASCIIString, nb::Integer)
+function writestring(io, str::String, nb::Integer)
     n = length(str)
     npad = nb - n
     if npad < 0
