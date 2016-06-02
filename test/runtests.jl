@@ -1,3 +1,4 @@
+using FileIO
 using LasIO
 using Base.Test
 
@@ -7,15 +8,12 @@ filename = "libLAS_1.2.las" # point format 0
 testfile = joinpath(workdir, filename)
 writefile = joinpath(workdir, "libLAS_1.2-out.las")
 
-io = open(testfile)
-seek(io, 4)
-header = read(io, LasHeader)
-n = Int(header.records_count)
-
+"Find the centroid of all points in a LAS file"
 function centroid(io, header)
     x_sum = 0.0
     y_sum = 0.0
     z_sum = 0.0
+    n = Int(header.records_count)
 
     for i = 1:n
         p = read(io, LasPoint0)
@@ -35,20 +33,25 @@ function centroid(io, header)
     x_avg, y_avg, z_avg
 end
 
-seek(io, header.data_offset)
-centroid(io, header)
-seek(io, header.data_offset)
-@time x_avg, y_avg, z_avg = centroid(io, header)
+# reading point by point
+open(testfile) do io
+    seek(io, 4)
+    header = read(io, LasHeader)
 
-@test_approx_eq x_avg 1442694.2739025319
-@test_approx_eq y_avg 377449.24373880465
-@test_approx_eq z_avg 861.60254888088491
+    seek(io, header.data_offset)
+    x_avg, y_avg, z_avg = centroid(io, header)
 
-close(io)
+    @test_approx_eq x_avg 1442694.2739025319
+    @test_approx_eq y_avg 377449.24373880465
+    @test_approx_eq z_avg 861.60254888088491
+end
 
-headerio, pointdata = load(testfile)
-save(writefile, headerio, pointdata)
-@test read(testfile) == read(writefile)
+# reading complete file into memory
+# test if output file matches input file
+header, pointdata = load(testfile)
+n = length(pointdata)
+save(writefile, header, pointdata)
+@test hash(read(testfile)) == hash(read(writefile))
 rm(writefile)
 
 # memory mapping the point data

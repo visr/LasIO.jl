@@ -13,6 +13,9 @@ export
     LasPoint2,
     LasPoint3,
 
+    # Functions on LasHeader
+    update!,
+
     # Functions on LasPoint
     return_number,
     number_of_returns,
@@ -24,14 +27,11 @@ export
     withheld,
     xcoord,
     ycoord,
-    zcoord,
-
-    # From FileIO
-    save,
-    load
+    zcoord
 
 include("header.jl")
 include("point.jl")
+include("util.jl")
 include("fileio.jl")
 
 end # module

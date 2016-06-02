@@ -270,11 +270,11 @@ synthetic(p::LasPoint) = Bool((p.raw_classification & 0b00000100) >> 2)
 key_point(p::LasPoint) = Bool((p.raw_classification & 0b00000010) >> 1)
 withheld(p::LasPoint) = Bool(p.raw_classification & 0b00000001)
 
-function convert(::Type{Point3}, p::LasPoint, h::LasHeader)
-    Point3(xcoord(p, header), xcoord(p, header), xcoord(p, header))
+function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
+    Point{3, Float64}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
 end
 
 # beware of the limited precision, for instance with UTM coordinates
-function convert(::Type{Point3f0}, p::LasPoint, h::LasHeader)
-    Point3f0(xcoord(p, header), xcoord(p, header), xcoord(p, header))
+function Base.convert(::Type{Point{3, Float32}}, p::LasPoint, h::LasHeader)
+    Point{3, Float32}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
 end

@@ -1,10 +1,8 @@
 
 # these should eventually go in
 # https://github.com/JuliaIO/FileIO.jl/blob/master/src/registry.jl
-add_format(format"LAS", "LASF", ".las")
+add_format(format"LAS", "LASF", ".las", [:LasIO])
 
-add_loader(format"LAS", :LasIO)
-add_saver(format"LAS", :LasIO)
 
 function pointformat(header::LasHeader)
     id = header.data_format_id
@@ -21,14 +19,14 @@ function pointformat(header::LasHeader)
     end
 end
 
-function FileIO.load(f::File{format"LAS"})
+function load(f::File{format"LAS"})
     open(f) do s
         skipmagic(s) # skip over the magic bytes
         load(s)
     end
 end
 
-function FileIO.load(s::Stream{format"LAS"})
+function load(s::Stream{format"LAS"})
     seek(s, 4)
     header = read(s, LasHeader)
     seek(s, header.data_offset)
@@ -53,26 +51,30 @@ function read_header(s::IOStream)
     read(s, LasHeader)
 end
 
-function FileIO.save(f::File{format"LAS"}, header, pointdata)
+function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T})
     open(f, "w") do s
         save(s, header, pointdata)
     end
 end
 
-function FileIO.save(s::Stream{format"LAS"}, header, pointdata)
+function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T})
+    # checks
     @assert header.n_vlr == 0  # not yet implemented
+    header_n = header.records_count
     n = length(pointdata)
-    @assert header.records_count == n
+    msg = "number of records in header ($header_n) does not match data length ($n)"
+    @assert header_n == n msg
+
+    # write header
     write(s, magic(format"LAS"))
     write(s, header)
-    # this needs to be fixed
-    # it seems like some LAS 1.2 files have the
-    # Start of waveform data record
-    # even though it is introduced in LAS 1.3
+    # possibly add padding based on data offset from header
     bytes_togo = header.data_offset - position(s)
     if bytes_togo > 0
         write(s, zeros(UInt8, bytes_togo))
     end
+
+    # write points
     for i = 1:n
         write(s, pointdata[i])
     end
