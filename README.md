@@ -14,6 +14,7 @@ This is a pure Julia alternative to [LibLAS.jl](https://github.com/visr/LibLAS.j
 If the file fits into memory, it can be loaded using
 
 ```julia
+using FileIO
 using LasIO
 header, points = load("test.las")
 ```
