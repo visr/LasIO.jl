@@ -1,5 +1,7 @@
 module LasIO
 
+using Compat
+import Compat.String
 using FileIO
 using FixedPointNumbers # used for color
 using GeometryTypes # for conversion

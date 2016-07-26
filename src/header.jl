@@ -92,7 +92,7 @@ function readstring(io, nb::Integer)
     bytes = read(io, nb)
     # strip possible null bytes
     lastchar = findlast(bytes)
-    ascii(bytes[1:lastchar])
+    @compat String(bytes[1:lastchar])
 end
 
 function writestring(io, str::AbstractString, nb::Integer)
@@ -103,7 +103,7 @@ function writestring(io, str::AbstractString, nb::Integer)
     elseif npad == 0
         write(io, str)
     else
-        writestr = bytestring(str * "\0"^npad)
+        writestr = string(str * "\0"^npad)
         write(io, writestr)
     end
 end
