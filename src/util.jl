@@ -13,13 +13,13 @@ function update!{T<:LasPoint}(h::LasHeader, pvec::Vector{T})
         if z < z_min
             z_min = z
         end
-        if x < x_max
+        if x > x_max
             x_max = x
         end
-        if y < y_max
+        if y > y_max
             y_max = y
         end
-        if z < z_max
+        if z > z_max
             z_max = z
         end
     end
