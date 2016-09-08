@@ -259,16 +259,16 @@ end
 
 
 # functions to extract sub-byte items from a LasPoint's flag_byte
-return_number(p::LasPoint) = (p.flag_byte & 0b11100000) >> 5
-number_of_returns(p::LasPoint) = (p.flag_byte & 0b00011100) >> 2
-scan_direction(p::LasPoint) = Bool((p.flag_byte & 0b00000010) >> 1)
-edge_of_flight_line(p::LasPoint) = Bool(p.flag_byte & 0b00000001)
+return_number(p::LasPoint) = (p.flag_byte & 0b00000111) 
+number_of_returns(p::LasPoint) = (p.flag_byte & 0b00111000) >> 3
+scan_direction(p::LasPoint) = Bool((p.flag_byte & 0b01000000) >> 6)
+edge_of_flight_line(p::LasPoint) = Bool((p.flag_byte & 0b10000000) >> 7)
 
 # functions to extract sub-byte items from a LasPoint's raw_classification
-classification(p::LasPoint) = (p.raw_classification & 0b11111000) >> 3
-synthetic(p::LasPoint) = Bool((p.raw_classification & 0b00000100) >> 2)
-key_point(p::LasPoint) = Bool((p.raw_classification & 0b00000010) >> 1)
-withheld(p::LasPoint) = Bool(p.raw_classification & 0b00000001)
+classification(p::LasPoint) = (p.raw_classification & 0b00011111)
+synthetic(p::LasPoint) = Bool((p.raw_classification & 0b00100000) >> 5)
+key_point(p::LasPoint) = Bool((p.raw_classification & 0b01000000) >> 6)
+withheld(p::LasPoint) = Bool((p.raw_classification & 0b10000000) >> 7)
 
 function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
     Point{3, Float64}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
