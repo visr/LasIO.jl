@@ -258,21 +258,33 @@ function Base.write(io::IO, p::LasPoint3)
 end
 
 # functions to access common LasPoint fields
+"Integer representation of the pulse return magnitude."
 intensity(p::LasPoint) = p.intensity
+"Angle at which the laser point was output, including the roll of the aircraft."
 scan_angle(p::LasPoint) = p.scan_angle
+"This field may be used at the user’s discretion."
 user_data(p::LasPoint) = p.user_data
+"This value indicates the file from which this point originated."
 pt_src_id(p::LasPoint) = p.pt_src_id
 
 # functions to extract sub-byte items from a LasPoint's flag_byte
+"The pulse return number for a given output pulse, starting at one."
 return_number(p::LasPoint) = (p.flag_byte & 0b00000111)
+"The total number of returns for a given pulse."
 number_of_returns(p::LasPoint) = (p.flag_byte & 0b00111000) >> 3
+"If true, the scanner mirror was traveling from left to right at the time of the output pulse."
 scan_direction(p::LasPoint) = Bool((p.flag_byte & 0b01000000) >> 6)
+"If true, it is the last point before the scanner changes direction."
 edge_of_flight_line(p::LasPoint) = Bool((p.flag_byte & 0b10000000) >> 7)
 
 # functions to extract sub-byte items from a LasPoint's raw_classification
+"Classification value as defined in the ASPRS classification table."
 classification(p::LasPoint) = (p.raw_classification & 0b00011111)
+"If true, the point was not created from lidar collection"
 synthetic(p::LasPoint) = Bool((p.raw_classification & 0b00100000) >> 5)
+"If true, this point is considered to be a model key-point."
 key_point(p::LasPoint) = Bool((p.raw_classification & 0b01000000) >> 6)
+"If true, this point should not be included in processing"
 withheld(p::LasPoint) = Bool((p.raw_classification & 0b10000000) >> 7)
 
 function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
