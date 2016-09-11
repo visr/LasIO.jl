@@ -257,9 +257,14 @@ function Base.write(io::IO, p::LasPoint3)
     nothing
 end
 
+# functions to access common LasPoint fields
+intensity(p::LasPoint) = p.intensity
+scan_angle(p::LasPoint) = p.scan_angle
+user_data(p::LasPoint) = p.user_data
+point_source_id(p::LasPoint) = p.point_source_id
 
 # functions to extract sub-byte items from a LasPoint's flag_byte
-return_number(p::LasPoint) = (p.flag_byte & 0b00000111) 
+return_number(p::LasPoint) = (p.flag_byte & 0b00000111)
 number_of_returns(p::LasPoint) = (p.flag_byte & 0b00111000) >> 3
 scan_direction(p::LasPoint) = Bool((p.flag_byte & 0b01000000) >> 6)
 edge_of_flight_line(p::LasPoint) = Bool((p.flag_byte & 0b10000000) >> 7)
