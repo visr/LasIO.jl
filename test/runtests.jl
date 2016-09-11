@@ -77,7 +77,7 @@ save(writefile, header, pointdata)
 rm(writefile)
 
 # memory mapping the point data
-open(filename) do io
+open(testfile) do io
     seek(io, header.data_offset)
     ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
     @test ptdata == pointdata

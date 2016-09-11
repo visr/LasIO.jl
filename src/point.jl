@@ -45,9 +45,9 @@ immutable LasPoint2 <: LasPoint
     scan_angle::UInt8
     user_data::UInt8
     pt_src_id::UInt16
-    red::UFixed16
-    green::UFixed16
-    blue::UFixed16
+    red::U16
+    green::U16
+    blue::U16
 end
 
 "ASPRS LAS point data record format 3"
@@ -62,10 +62,14 @@ immutable LasPoint3 <: LasPoint
     user_data::UInt8
     pt_src_id::UInt16
     gps_time::Float64
-    red::UFixed16
-    green::UFixed16
-    blue::UFixed16
+    red::U16
+    green::U16
+    blue::U16
 end
+
+# for convenience in function signatures
+typealias LasPointColor Union{LasPoint2, LasPoint3}
+typealias LasPointTime Union{LasPoint1, LasPoint3}
 
 function Base.show(io::IO, p::LasPoint)
     z = Int(p.z)
@@ -143,9 +147,9 @@ function Base.read(io::IO, ::Type{LasPoint2})
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
-    red = reinterpret(UFixed16, read(io, UInt16))
-    green = reinterpret(UFixed16, read(io, UInt16))
-    blue = reinterpret(UFixed16, read(io, UInt16))
+    red = reinterpret(U16, read(io, UInt16))
+    green = reinterpret(U16, read(io, UInt16))
+    blue = reinterpret(U16, read(io, UInt16))
     LasPoint2(
         x,
         y,
@@ -174,9 +178,9 @@ function Base.read(io::IO, ::Type{LasPoint3})
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
-    red = reinterpret(UFixed16, read(io, UInt16))
-    green = reinterpret(UFixed16, read(io, UInt16))
-    blue = reinterpret(UFixed16, read(io, UInt16))
+    red = reinterpret(U16, read(io, UInt16))
+    green = reinterpret(U16, read(io, UInt16))
+    blue = reinterpret(U16, read(io, UInt16))
     LasPoint3(
         x,
         y,
@@ -266,6 +270,25 @@ scan_angle(p::LasPoint) = p.scan_angle
 user_data(p::LasPoint) = p.user_data
 "This value indicates the file from which this point originated."
 pt_src_id(p::LasPoint) = p.pt_src_id
+
+# time
+# 1.3159648e9 = 315964800.0 + 1.0e9
+# 1.0e9: see LAS spec (for float accuracy)
+# 315964800: seconds between 1970 (Unix epoch) and 1980 (GPS epoch), from http://stackoverflow.com/a/20528332
+"""Get the DateTime that the point was collected.
+Assumes time is recorded in Adjusted Standard GPS Time; see `is_standard_gps`"""
+Dates.DateTime(p::LasPointTime) = Dates.unix2datetime(p.gps_time + 1.3159648e9)
+# A conversion of the GPS Week Time format to DateTime is not yet implemented
+
+# color
+"The red image channel value associated with this point"
+ColorTypes.red(p::LasPointColor) = p.red
+"The green image channel value associated with this point"
+ColorTypes.green(p::LasPointColor) = p.green
+"The blue image channel value associated with this point"
+ColorTypes.blue(p::LasPointColor) = p.blue
+"The RGB color associated with this point"
+ColorTypes.RGB(p::LasPointColor) = RGB(red(p), green(p), blue(p))
 
 # functions to extract sub-byte items from a LasPoint's flag_byte
 "The pulse return number for a given output pulse, starting at one."

@@ -3,7 +3,7 @@ module LasIO
 using Compat
 import Compat.String
 using FileIO
-using FixedPointNumbers # used for color
+using ColorTypes
 using GeometryTypes # for conversion
 
 export
@@ -33,7 +33,13 @@ export
     intensity,
     scan_angle,
     user_data,
-    pt_src_id
+    pt_src_id,
+
+    # extended from ColorTypes
+    red,
+    green,
+    blue,
+    RGB
 
 include("header.jl")
 include("point.jl")

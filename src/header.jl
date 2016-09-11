@@ -220,3 +220,9 @@ function Base.write(io::IO, h::LasHeader)
     # possibly introduce typed headers like the points
     nothing
 end
+
+"""If true, GPS Time is standard GPS Time (satellite GPS Time) minus 1e9.
+If false, GPS Time is GPS Week Time.
+
+Note that not all software sets this encoding correctly."""
+is_standard_gps(h::LasHeader) = isodd(h.global_encoding)
