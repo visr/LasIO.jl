@@ -33,7 +33,7 @@ export
     intensity,
     scan_angle,
     user_data,
-    point_source_id
+    pt_src_id
 
 include("header.jl")
 include("point.jl")

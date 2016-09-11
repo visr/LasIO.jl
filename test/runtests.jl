@@ -54,7 +54,7 @@ open(testfile) do io
     @test intensity(p) === 0x00fa
     @test scan_angle(p) === 0x00
     @test user_data(p) === 0x00
-    @test point_source_id(p) === 0x001d
+    @test pt_src_id(p) === 0x001d
     @test return_number(p) === 0x00
     @test number_of_returns(p) === 0x00
     @test scan_direction(p) === false

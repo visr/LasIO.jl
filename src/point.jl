@@ -17,7 +17,7 @@ immutable LasPoint0 <: LasPoint
     raw_classification::UInt8
     scan_angle::UInt8
     user_data::UInt8
-    point_source_id::UInt16
+    pt_src_id::UInt16
 end
 
 "ASPRS LAS point data record format 1"
@@ -30,7 +30,7 @@ immutable LasPoint1 <: LasPoint
     raw_classification::UInt8
     scan_angle::UInt8
     user_data::UInt8
-    point_source_id::UInt16
+    pt_src_id::UInt16
     gps_time::Float64
 end
 
@@ -44,7 +44,7 @@ immutable LasPoint2 <: LasPoint
     raw_classification::UInt8
     scan_angle::UInt8
     user_data::UInt8
-    point_source_id::UInt16
+    pt_src_id::UInt16
     red::UFixed16
     green::UFixed16
     blue::UFixed16
@@ -60,7 +60,7 @@ immutable LasPoint3 <: LasPoint
     raw_classification::UInt8
     scan_angle::UInt8
     user_data::UInt8
-    point_source_id::UInt16
+    pt_src_id::UInt16
     gps_time::Float64
     red::UFixed16
     green::UFixed16
@@ -93,7 +93,7 @@ function Base.read(io::IO, ::Type{LasPoint0})
     raw_classification = read(io, UInt8)
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
-    point_source_id = read(io, UInt16)
+    pt_src_id = read(io, UInt16)
     LasPoint0(
         x,
         y,
@@ -103,7 +103,7 @@ function Base.read(io::IO, ::Type{LasPoint0})
         raw_classification,
         scan_angle,
         user_data,
-        point_source_id
+        pt_src_id
     )
 end
 
@@ -116,7 +116,7 @@ function Base.read(io::IO, ::Type{LasPoint1})
     raw_classification = read(io, UInt8)
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
-    point_source_id = read(io, UInt16)
+    pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
     LasPoint1(
         x,
@@ -127,7 +127,7 @@ function Base.read(io::IO, ::Type{LasPoint1})
         raw_classification,
         scan_angle,
         user_data,
-        point_source_id,
+        pt_src_id,
         gps_time
     )
 end
@@ -142,7 +142,7 @@ function Base.read(io::IO, ::Type{LasPoint2})
     raw_classification = read(io, UInt8)
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
-    point_source_id = read(io, UInt16)
+    pt_src_id = read(io, UInt16)
     red = reinterpret(UFixed16, read(io, UInt16))
     green = reinterpret(UFixed16, read(io, UInt16))
     blue = reinterpret(UFixed16, read(io, UInt16))
@@ -155,7 +155,7 @@ function Base.read(io::IO, ::Type{LasPoint2})
         raw_classification,
         scan_angle,
         user_data,
-        point_source_id,
+        pt_src_id,
         red,
         green,
         blue
@@ -172,7 +172,7 @@ function Base.read(io::IO, ::Type{LasPoint3})
     raw_classification = read(io, UInt8)
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
-    point_source_id = read(io, UInt16)
+    pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
     red = reinterpret(UFixed16, read(io, UInt16))
     green = reinterpret(UFixed16, read(io, UInt16))
@@ -186,7 +186,7 @@ function Base.read(io::IO, ::Type{LasPoint3})
         raw_classification,
         scan_angle,
         user_data,
-        point_source_id,
+        pt_src_id,
         gps_time,
         red,
         green,
@@ -206,7 +206,7 @@ function Base.write(io::IO, p::LasPoint0)
     write(io, p.raw_classification)
     write(io, p.scan_angle)
     write(io, p.user_data)
-    write(io, p.point_source_id)
+    write(io, p.pt_src_id)
     nothing
 end
 
@@ -219,7 +219,7 @@ function Base.write(io::IO, p::LasPoint1)
     write(io, p.raw_classification)
     write(io, p.scan_angle)
     write(io, p.user_data)
-    write(io, p.point_source_id)
+    write(io, p.pt_src_id)
     write(io, p.gps_time)
     nothing
 end
@@ -233,7 +233,7 @@ function Base.write(io::IO, p::LasPoint2)
     write(io, p.raw_classification)
     write(io, p.scan_angle)
     write(io, p.user_data)
-    write(io, p.point_source_id)
+    write(io, p.pt_src_id)
     write(io, reinterpret(UInt16, p.red))
     write(io, reinterpret(UInt16, p.green))
     write(io, reinterpret(UInt16, p.blue))
@@ -249,7 +249,7 @@ function Base.write(io::IO, p::LasPoint3)
     write(io, p.raw_classification)
     write(io, p.scan_angle)
     write(io, p.user_data)
-    write(io, p.point_source_id)
+    write(io, p.pt_src_id)
     write(io, p.gps_time)
     write(io, reinterpret(UInt16, p.red))
     write(io, reinterpret(UInt16, p.green))
@@ -261,7 +261,7 @@ end
 intensity(p::LasPoint) = p.intensity
 scan_angle(p::LasPoint) = p.scan_angle
 user_data(p::LasPoint) = p.user_data
-point_source_id(p::LasPoint) = p.point_source_id
+pt_src_id(p::LasPoint) = p.pt_src_id
 
 # functions to extract sub-byte items from a LasPoint's flag_byte
 return_number(p::LasPoint) = (p.flag_byte & 0b00000111)
