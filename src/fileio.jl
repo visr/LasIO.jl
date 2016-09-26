@@ -1,9 +1,4 @@
 
-# these should eventually go in
-# https://github.com/JuliaIO/FileIO.jl/blob/master/src/registry.jl
-add_format(format"LAS", "LASF", ".las", [:LasIO])
-
-
 function pointformat(header::LasHeader)
     id = header.data_format_id
     if id == 0x00

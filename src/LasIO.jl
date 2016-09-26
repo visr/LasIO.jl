@@ -48,4 +48,10 @@ include("point.jl")
 include("util.jl")
 include("fileio.jl")
 
+function __init__()
+    # these should eventually go in
+    # https://github.com/JuliaIO/FileIO.jl/blob/master/src/registry.jl
+    add_format(format"LAS", "LASF", ".las", [:LasIO])
+end
+
 end # module
