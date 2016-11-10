@@ -24,6 +24,8 @@ end
 function load(s::Stream{format"LAS"})
     seek(s, 4)
     header = read(s, LasHeader)
+    vlrs = [read(s, LasVariableLengthRecord, false) for i=1:header.n_vlr]
+    header.variable_length_records = vlrs
     seek(s, header.data_offset)
     n = header.records_count
     pointtype = pointformat(header)

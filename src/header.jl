@@ -46,6 +46,7 @@ type LasHeader
     y_min::Float64
     z_max::Float64
     z_min::Float64
+    variable_length_records::Vector{LasVariableLengthRecord}
 end
 
 function Base.show(io::IO, header::LasHeader)
@@ -86,6 +87,10 @@ function Base.showall(io::IO, h::LasHeader)
     println(io, string("\ty_min = ", h.y_min))
     println(io, string("\tz_max = ", h.z_max))
     println(io, string("\tz_min = ", h.z_min))
+    println(io, string("\tvariable_length_records = "))
+    for vlr in h.variable_length_records
+        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(length(vlr.data)) bytes...)")
+    end
 end
 
 function readstring(io, nb::Integer)
@@ -174,7 +179,8 @@ function Base.read(io::IO, ::Type{LasHeader})
         y_max,
         y_min,
         z_max,
-        z_min
+        z_min,
+        Vector{LasVariableLengthRecord}()
     )
 end
 

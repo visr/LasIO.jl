@@ -43,6 +43,7 @@ export
     blue,
     RGB
 
+include("vlrs.jl")
 include("header.jl")
 include("point.jl")
 include("util.jl")
