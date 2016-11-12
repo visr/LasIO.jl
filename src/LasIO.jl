@@ -11,6 +11,7 @@ using GeometryTypes # for conversion
 export
     # Types
     LasHeader,
+    LasVariableLengthRecord,
     LasPoint,
     LasPoint0,
     LasPoint1,

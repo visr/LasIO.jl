@@ -47,6 +47,7 @@ type LasHeader
     z_max::Float64
     z_min::Float64
     variable_length_records::Vector{LasVariableLengthRecord}
+    user_defined_bytes::Vector{UInt8}
 end
 
 function Base.show(io::IO, header::LasHeader)
@@ -115,6 +116,7 @@ end
 
 
 function Base.read(io::IO, ::Type{LasHeader})
+    seek(io, 4)  # after LASF
     file_source_id = read(io, UInt16)
     global_encoding = read(io, UInt16)
     guid_1 = read(io, UInt32)
@@ -146,6 +148,8 @@ function Base.read(io::IO, ::Type{LasHeader})
     y_min = read(io, Float64)
     z_max = read(io, Float64)
     z_min = read(io, Float64)
+    vlrs = [read(io, LasVariableLengthRecord, false) for i=1:n_vlr]
+    user_defined_bytes = read(io, data_offset - position(io))
 
     # put it all in a type
     header = LasHeader(
@@ -180,7 +184,8 @@ function Base.read(io::IO, ::Type{LasHeader})
         y_min,
         z_max,
         z_min,
-        Vector{LasVariableLengthRecord}()
+        vlrs,
+        user_defined_bytes
     )
 end
 
@@ -200,6 +205,7 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.creation_year)
     write(io, h.header_size)
     write(io, h.data_offset)
+    @assert length(h.variable_length_records) == h.n_vlr
     write(io, h.n_vlr)
     write(io, h.data_format_id)
     write(io, h.data_record_length)
@@ -222,6 +228,10 @@ function Base.write(io::IO, h::LasHeader)
     if lasversion >= v"1.3"
         write(io, 0x0000) # Start of waveform data record (unsupported)
     end
+    for i in 1:h.n_vlr
+        write(io, h.variable_length_records[i])
+    end
+    write(io, h.user_defined_bytes)
     # note that for LAS 1.4 a few new parts need to be written
     # possibly introduce typed headers like the points
     nothing

@@ -33,3 +33,14 @@ function Base.read(io::IO, ::Type{LasVariableLengthRecord}, extended::Bool=false
         data
     )
 end
+
+function Base.write(io::IO, vlr::LasVariableLengthRecord, extended::Bool=false)
+    write(io, vlr.reserved)
+    writestring(io, vlr.user_id, 16)
+    write(io, vlr.record_id)
+    record_data_length = extended ? UInt64(length(vlr.data)) : UInt16(length(vlr.data))
+    write(io, record_data_length)
+    writestring(io, vlr.description, 32)
+    write(io, vlr.data)
+    nothing
+end

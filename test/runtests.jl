@@ -82,3 +82,29 @@ open(testfile) do io
     ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
     @test ptdata == pointdata
 end
+
+# testing a las file version 1.0 point format 1 file with VLRs
+srsfile = joinpath(workdir, "srs.las")
+srsfile_out = joinpath(workdir, "srs-out.las")
+srsheader, srspoints = load(srsfile)
+@test srsheader.version_major == 1
+@test srsheader.version_minor == 0
+@test srsheader.data_format_id == 1
+@test srsheader.n_vlr == 3
+@test isa(srsheader.variable_length_records, Vector{LasVariableLengthRecord})
+for vlr in srsheader.variable_length_records
+    @test vlr.reserved === 0xaabb
+    @test vlr.user_id == "LASF_Projection"
+    @test vlr.description == ""
+end
+
+@test srsheader.variable_length_records[1].record_id == 34735  # GeoKeyDirectoryTag
+@test srsheader.variable_length_records[2].record_id == 34736  # GeoDoubleParamsTag
+@test srsheader.variable_length_records[3].record_id == 34737  # GeoAsciiParamsTag
+@test srsheader.variable_length_records[1].data[1:4] == [0x01,0x00,0x01,0x00]
+@test all(x -> x === 0x00, srsheader.variable_length_records[2].data)
+@test all(x -> x === 0x00, srsheader.variable_length_records[3].data)
+
+save(srsfile_out, srsheader, srspoints)
+@test hash(read(srsfile)) == hash(read(srsfile_out))
+rm(srsfile_out)
