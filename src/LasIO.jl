@@ -11,6 +11,7 @@ using GeometryTypes # for conversion
 export
     # Types
     LasHeader,
+    LasVariableLengthRecord,
     LasPoint,
     LasPoint0,
     LasPoint1,
@@ -43,6 +44,7 @@ export
     blue,
     RGB
 
+include("vlrs.jl")
 include("header.jl")
 include("point.jl")
 include("util.jl")

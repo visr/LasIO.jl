@@ -22,8 +22,8 @@ function load(f::File{format"LAS"})
 end
 
 function load(s::Stream{format"LAS"})
-    seek(s, 4)
     header = read(s, LasHeader)
+
     seek(s, header.data_offset)
     n = header.records_count
     pointtype = pointformat(header)
@@ -54,7 +54,6 @@ end
 
 function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T})
     # checks
-    @assert header.n_vlr == 0  # not yet implemented
     header_n = header.records_count
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
@@ -63,11 +62,8 @@ function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata:
     # write header
     write(s, magic(format"LAS"))
     write(s, header)
-    # possibly add padding based on data offset from header
     bytes_togo = header.data_offset - position(s)
-    if bytes_togo > 0
-        write(s, zeros(UInt8, bytes_togo))
-    end
+    @assert bytes_togo == 0
 
     # write points
     for i = 1:n
