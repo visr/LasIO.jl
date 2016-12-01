@@ -49,8 +49,11 @@ open(testfile) do io
     p = read(io, LasPoint0)
 
     @test xcoord(p, header) ≈ 1.44013394e6
+    @test xcoord(1.44013394e6, header) ≈ p.x
     @test ycoord(p, header) ≈ 375000.23
+    @test ycoord(375000.23, header) ≈ p.y
     @test zcoord(p, header) ≈ 846.66
+    @test zcoord(846.66, header) ≈ p.z
     @test intensity(p) === 0x00fa
     @test scan_angle(p) === 0x00
     @test user_data(p) === 0x00
@@ -64,8 +67,15 @@ open(testfile) do io
     @test key_point(p) === false
     @test withheld(p) === false
 
-    # TODO GPS time, colors
-    # @show user_data(p)
+    # raw bytes composed of bit fields
+    @test flag_byte(p) === 0x00
+    @test raw_classification(p) === 0x02
+
+    # recompose bytes with bit fields
+    @test flag_byte(return_number(p),number_of_returns(p),scan_direction(p),edge_of_flight_line(p)) === p.flag_byte
+    @test raw_classification(classification(p),synthetic(p),key_point(p),withheld(p)) === p.raw_classification
+
+    # TODO GPS time, colors (not in this test file, is point data format 0)
 end
 
 # reading complete file into memory

@@ -37,6 +37,9 @@ export
     scan_angle,
     user_data,
     pt_src_id,
+    gps_time,
+    raw_classification,
+    flag_byte,
 
     # extended from ColorTypes
     red,

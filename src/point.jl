@@ -85,6 +85,13 @@ ycoord(p::LasPoint, h::LasHeader) = muladd(p.y, h.y_scale, h.y_offset)
 "Z coordinate (Float64), apply scale and offset according to the header"
 zcoord(p::LasPoint, h::LasHeader) = muladd(p.z, h.z_scale, h.z_offset)
 
+# inverse functions of the above
+"X value (Int32), as represented in the point data, reversing the offset and scale from the header"
+xcoord(x::Real, h::LasHeader) = round(Int32, (x - h.x_offset) / h.x_scale)
+"Y value (Int32), as represented in the point data, reversing the offset and scale from the header"
+ycoord(y::Real, h::LasHeader) = round(Int32, (y - h.y_offset) / h.y_scale)
+"Z value (Int32), as represented in the point data, reversing the offset and scale from the header"
+zcoord(z::Real, h::LasHeader) = round(Int32, (z - h.z_offset) / h.z_scale)
 
 # functions for reading the points from a stream
 
@@ -276,9 +283,17 @@ pt_src_id(p::LasPoint) = p.pt_src_id
 # 1.0e9: see LAS spec (for float accuracy)
 # 315964800: seconds between 1970 (Unix epoch) and 1980 (GPS epoch), from http://stackoverflow.com/a/20528332
 """Get the DateTime that the point was collected.
-Assumes time is recorded in Adjusted Standard GPS Time; see `is_standard_gps`"""
-Dates.DateTime(p::LasPointTime) = Dates.unix2datetime(p.gps_time + 1.3159648e9)
+Assumes time is recorded in Adjusted Standard GPS Time; see `is_standard_gps`.
+Note that DateTime has millisecond precision, any higher precision is lost."""
+Dates.DateTime(p::LasPointTime) = Dates.unix2datetime(p.gps_time) + Dates.Second(1315964800)
 # A conversion of the GPS Week Time format to DateTime is not yet implemented
+
+"""Time tag value at which the point was aquired,
+a Float64; see `is_standard_gps` for what it represents"""
+gps_time(p::LasPointTime) = p.gps_time
+"""Convert DateTime to GPS Float64, as represented in the point data,
+assumes time is recorded in Adjusted Standard GPS Time; see `is_standard_gps`"""
+gps_time(d::DateTime) = Dates.datetime2unix(d - Dates.Second(1315964800))
 
 # color
 "The red image channel value associated with this point"
@@ -300,6 +315,15 @@ scan_direction(p::LasPoint) = Bool((p.flag_byte & 0b01000000) >> 6)
 "If true, it is the last point before the scanner changes direction."
 edge_of_flight_line(p::LasPoint) = Bool((p.flag_byte & 0b10000000) >> 7)
 
+"Flag byte, contains return number, number of returns, scan direction flag and edge of flight line"
+flag_byte(p::LasPoint) = p.flag_byte
+"Flag byte, as represented in the point data, built up from components"
+function flag_byte(return_number::UInt8, number_of_returns::UInt8,
+                   scan_direction::Bool, edge_of_flight_line::Bool)
+    # Bool to UInt8 conversion because a bit shift on a Bool produces an Int
+    UInt8((edge_of_flight_line << 7) | (scan_direction << 6) | (UInt8(number_of_returns) << 3) | UInt8(return_number))
+end
+
 # functions to extract sub-byte items from a LasPoint's raw_classification
 "Classification value as defined in the ASPRS classification table."
 classification(p::LasPoint) = (p.raw_classification & 0b00011111)
@@ -309,6 +333,14 @@ synthetic(p::LasPoint) = Bool((p.raw_classification & 0b00100000) >> 5)
 key_point(p::LasPoint) = Bool((p.raw_classification & 0b01000000) >> 6)
 "If true, this point should not be included in processing"
 withheld(p::LasPoint) = Bool((p.raw_classification & 0b10000000) >> 7)
+
+"Raw classification byte, contains classification, synthetic, key point and withheld"
+raw_classification(p::LasPoint) = p.raw_classification
+"Raw classification byte, as represented in the point data, built up from components"
+function raw_classification(classification::UInt8, synthetic::Bool,
+                            key_point::Bool, withheld::Bool)
+    UInt8((withheld << 7) | (UInt8(key_point) << 6) | (UInt8(synthetic) << 3) | UInt8(classification))
+end
 
 function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
     Point{3, Float64}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
