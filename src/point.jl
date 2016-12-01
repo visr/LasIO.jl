@@ -321,7 +321,7 @@ flag_byte(p::LasPoint) = p.flag_byte
 function flag_byte(return_number::UInt8, number_of_returns::UInt8,
                    scan_direction::Bool, edge_of_flight_line::Bool)
     # Bool to UInt8 conversion because a bit shift on a Bool produces an Int
-    UInt8((edge_of_flight_line << 7) | (scan_direction << 6) | (UInt8(number_of_returns) << 3) | UInt8(return_number))
+    UInt8(edge_of_flight_line) << 7 | UInt8(scan_direction) << 6 | number_of_returns << 3 | return_number
 end
 
 # functions to extract sub-byte items from a LasPoint's raw_classification
@@ -339,7 +339,7 @@ raw_classification(p::LasPoint) = p.raw_classification
 "Raw classification byte, as represented in the point data, built up from components"
 function raw_classification(classification::UInt8, synthetic::Bool,
                             key_point::Bool, withheld::Bool)
-    UInt8((withheld << 7) | (UInt8(key_point) << 6) | (UInt8(synthetic) << 3) | UInt8(classification))
+    UInt8(withheld) << 7 | UInt8(key_point) << 6 | UInt8(synthetic) << 5 | classification
 end
 
 function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
