@@ -36,13 +36,11 @@ end
 
 function read_header(f::AbstractString)
     open(f) do s
-        seek(s, 4)
         read(s, LasHeader)
     end
 end
 
-function read_header(s::IOStream)
-    seek(s, 4)
+function read_header(s::IO)
     read(s, LasHeader)
 end
 

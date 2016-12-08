@@ -35,7 +35,6 @@ end
 
 # reading point by point
 open(testfile) do io
-    seek(io, 4)
     header = read(io, LasHeader)
 
     seek(io, header.data_offset)
