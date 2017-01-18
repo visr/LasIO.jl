@@ -6,6 +6,7 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+import LibLAS # for LAZ support, imported to avoid naming conflicts
 
 export
     # Types
@@ -19,6 +20,7 @@ export
 
     # Functions on LasHeader
     update!,
+    lasformat,
 
     # Functions on LasPoint
     return_number,
@@ -51,11 +53,15 @@ include("header.jl")
 include("point.jl")
 include("util.jl")
 include("fileio.jl")
+include("liblas.jl")
 
 function __init__()
     # these should eventually go in
     # https://github.com/JuliaIO/FileIO.jl/blob/master/src/registry.jl
     add_format(format"LAS", "LASF", ".las", [:LasIO])
+
+    # magic bytes are the same as LAS but they cannot share the same magic bytes
+    add_format(format"LAZ", (), ".laz", [:LasIO])
 end
 
 end # module

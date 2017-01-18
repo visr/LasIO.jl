@@ -1,6 +1,7 @@
 
 function pointformat(header::LasHeader)
     id = header.data_format_id
+    id &= 0x7f # for LAZ first bit is 1, set this bit back to 0 to not confuse this function
     if id == 0x00
         return LasPoint0
     elseif id == 0x01

@@ -5,6 +5,7 @@ using Base.Test
 workdir = dirname(@__FILE__)
 # source: http://www.liblas.org/samples/
 filename = "libLAS_1.2.las" # point format 0
+filename_laz = "libLAS_1.2.laz" # point format 0
 testfile = joinpath(workdir, filename)
 writefile = joinpath(workdir, "libLAS_1.2-out.las")
 
@@ -82,6 +83,16 @@ end
 header, pointdata = load(testfile)
 n = length(pointdata)
 save(writefile, header, pointdata)
+@test hash(read(testfile)) == hash(read(writefile))
+rm(writefile)
+
+# LAZ
+headerlaz, pointdatalaz = load(filename_laz)
+@test all(pointdata .== pointdatalaz)
+# TODO add function for comparing LasHeader
+save(writefile, lasformat(headerlaz), pointdatalaz)
+# check if the LAZ->LAS compares to the original LAS file on disk
+# LAZ file was generated with LASzip
 @test hash(read(testfile)) == hash(read(writefile))
 rm(writefile)
 
