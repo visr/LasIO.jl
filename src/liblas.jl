@@ -60,7 +60,7 @@ function makepoint(p::LibLAS.LASPoint, ::Type{LasPoint1})
     scan_angle = LibLAS.scan_angle_rank(p)
     user_data = LibLAS.userdata(p)
     pt_src_id = LibLAS.pointsource_id(p)
-    gps_time = LibLAS.time(p)
+    gps_time = LibLAS.gps_time(p)
     LasPoint1(
         x,
         y,
@@ -87,9 +87,9 @@ function makepoint(p::LibLAS.LASPoint, ::Type{LasPoint2})
     user_data = LibLAS.userdata(p)
     pt_src_id = LibLAS.pointsource_id(p)
     color = LibLAS.color(p)
-    red = LibLAS.red(color)
-    green = LibLAS.green(color)
-    blue = LibLAS.blue(color)
+    red = reinterpret(U16, LibLAS.red(color))
+    green = reinterpret(U16, LibLAS.green(color))
+    blue = reinterpret(U16, LibLAS.blue(color))
     LasPoint2(
         x,
         y,
@@ -117,11 +117,11 @@ function makepoint(p::LibLAS.LASPoint, ::Type{LasPoint3})
     scan_angle = LibLAS.scan_angle_rank(p)
     user_data = LibLAS.userdata(p)
     pt_src_id = LibLAS.pointsource_id(p)
-    gps_time = LibLAS.time(p)
+    gps_time = LibLAS.gps_time(p)
     color = LibLAS.color(p)
-    red = LibLAS.red(color)
-    green = LibLAS.green(color)
-    blue = LibLAS.blue(color)
+    red = reinterpret(U16, LibLAS.red(color))
+    green = reinterpret(U16, LibLAS.green(color))
+    blue = reinterpret(U16, LibLAS.blue(color))
     LasPoint3(
         x,
         y,
