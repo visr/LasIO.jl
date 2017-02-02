@@ -98,7 +98,7 @@ function readstring(io, nb::Integer)
     bytes = read(io, nb)
     # strip possible null bytes
     lastchar = findlast(bytes)
-    @compat String(bytes[1:lastchar])
+    String(bytes[1:lastchar])
 end
 
 function writestring(io, str::AbstractString, nb::Integer)

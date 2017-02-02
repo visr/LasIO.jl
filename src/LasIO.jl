@@ -2,9 +2,8 @@ __precompile__()
 
 module LasIO
 
-using Compat
-import Compat.String
 using FileIO
+using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
 
