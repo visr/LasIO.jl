@@ -45,9 +45,9 @@ immutable LasPoint2 <: LasPoint
     scan_angle::UInt8
     user_data::UInt8
     pt_src_id::UInt16
-    red::U16
-    green::U16
-    blue::U16
+    red::N0f16
+    green::N0f16
+    blue::N0f16
 end
 
 "ASPRS LAS point data record format 3"
@@ -62,9 +62,9 @@ immutable LasPoint3 <: LasPoint
     user_data::UInt8
     pt_src_id::UInt16
     gps_time::Float64
-    red::U16
-    green::U16
-    blue::U16
+    red::N0f16
+    green::N0f16
+    blue::N0f16
 end
 
 # for convenience in function signatures
@@ -154,9 +154,9 @@ function Base.read(io::IO, ::Type{LasPoint2})
     scan_angle = read(io, UInt8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
-    red = reinterpret(U16, read(io, UInt16))
-    green = reinterpret(U16, read(io, UInt16))
-    blue = reinterpret(U16, read(io, UInt16))
+    red = reinterpret(N0f16, read(io, UInt16))
+    green = reinterpret(N0f16, read(io, UInt16))
+    blue = reinterpret(N0f16, read(io, UInt16))
     LasPoint2(
         x,
         y,
@@ -185,9 +185,9 @@ function Base.read(io::IO, ::Type{LasPoint3})
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
-    red = reinterpret(U16, read(io, UInt16))
-    green = reinterpret(U16, read(io, UInt16))
-    blue = reinterpret(U16, read(io, UInt16))
+    red = reinterpret(N0f16, read(io, UInt16))
+    green = reinterpret(N0f16, read(io, UInt16))
+    blue = reinterpret(N0f16, read(io, UInt16))
     LasPoint3(
         x,
         y,
