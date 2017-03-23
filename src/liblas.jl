@@ -87,9 +87,9 @@ function makepoint(p::LibLAS.LASPoint, ::Type{LasPoint2})
     user_data = LibLAS.userdata(p)
     pt_src_id = LibLAS.pointsource_id(p)
     color = LibLAS.color(p)
-    red = reinterpret(U16, LibLAS.red(color))
-    green = reinterpret(U16, LibLAS.green(color))
-    blue = reinterpret(U16, LibLAS.blue(color))
+    red = reinterpret(N0f16, LibLAS.red(color))
+    green = reinterpret(N0f16, LibLAS.green(color))
+    blue = reinterpret(N0f16, LibLAS.blue(color))
     LasPoint2(
         x,
         y,
@@ -119,9 +119,9 @@ function makepoint(p::LibLAS.LASPoint, ::Type{LasPoint3})
     pt_src_id = LibLAS.pointsource_id(p)
     gps_time = LibLAS.gps_time(p)
     color = LibLAS.color(p)
-    red = reinterpret(U16, LibLAS.red(color))
-    green = reinterpret(U16, LibLAS.green(color))
-    blue = reinterpret(U16, LibLAS.blue(color))
+    red = reinterpret(N0f16, LibLAS.red(color))
+    green = reinterpret(N0f16, LibLAS.green(color))
+    blue = reinterpret(N0f16, LibLAS.blue(color))
     LasPoint3(
         x,
         y,
