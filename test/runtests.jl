@@ -3,6 +3,7 @@ using LasIO
 using Test
 
 include("stream.jl")
+include("fixedstrings.jl")
 
 workdir = dirname(@__FILE__)
 # source: http://www.liblas.org/samples/
