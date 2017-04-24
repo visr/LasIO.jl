@@ -9,7 +9,7 @@ using GeometryTypes # for conversion
 
 export
     # Types
-    LasHeader,
+    LasHeader12,
     LasVariableLengthRecord,
     LasPoint,
     LasPoint0,
@@ -17,7 +17,7 @@ export
     LasPoint2,
     LasPoint3,
 
-    # Functions on LasHeader
+    # Functions on LasHeader12
     update!,
 
     # Functions on LasPoint

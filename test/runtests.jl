@@ -35,7 +35,7 @@ end
 
 # reading point by point
 open(testfile) do io
-    header = read(io, LasHeader)
+    header = read(io, LasHeader12)
 
     seek(io, header.data_offset)
     x_avg, y_avg, z_avg = centroid(io, header)

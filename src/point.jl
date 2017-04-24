@@ -79,19 +79,19 @@ end
 
 
 "X coordinate (Float64), apply scale and offset according to the header"
-xcoord(p::LasPoint, h::LasHeader) = muladd(p.x, h.x_scale, h.x_offset)
+xcoord(p::LasPoint, h::LasHeader12) = muladd(p.x, h.x_scale, h.x_offset)
 "Y coordinate (Float64), apply scale and offset according to the header"
-ycoord(p::LasPoint, h::LasHeader) = muladd(p.y, h.y_scale, h.y_offset)
+ycoord(p::LasPoint, h::LasHeader12) = muladd(p.y, h.y_scale, h.y_offset)
 "Z coordinate (Float64), apply scale and offset according to the header"
-zcoord(p::LasPoint, h::LasHeader) = muladd(p.z, h.z_scale, h.z_offset)
+zcoord(p::LasPoint, h::LasHeader12) = muladd(p.z, h.z_scale, h.z_offset)
 
 # inverse functions of the above
 "X value (Int32), as represented in the point data, reversing the offset and scale from the header"
-xcoord(x::Real, h::LasHeader) = round(Int32, (x - h.x_offset) / h.x_scale)
+xcoord(x::Real, h::LasHeader12) = round(Int32, (x - h.x_offset) / h.x_scale)
 "Y value (Int32), as represented in the point data, reversing the offset and scale from the header"
-ycoord(y::Real, h::LasHeader) = round(Int32, (y - h.y_offset) / h.y_scale)
+ycoord(y::Real, h::LasHeader12) = round(Int32, (y - h.y_offset) / h.y_scale)
 "Z value (Int32), as represented in the point data, reversing the offset and scale from the header"
-zcoord(z::Real, h::LasHeader) = round(Int32, (z - h.z_offset) / h.z_scale)
+zcoord(z::Real, h::LasHeader12) = round(Int32, (z - h.z_offset) / h.z_scale)
 
 # functions for reading the points from a stream
 
@@ -342,11 +342,11 @@ function raw_classification(classification::UInt8, synthetic::Bool,
     UInt8(withheld) << 7 | UInt8(key_point) << 6 | UInt8(synthetic) << 5 | classification
 end
 
-function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader)
+function Base.convert(::Type{Point{3, Float64}}, p::LasPoint, h::LasHeader12)
     Point{3, Float64}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
 end
 
 # beware of the limited precision, for instance with UTM coordinates
-function Base.convert(::Type{Point{3, Float32}}, p::LasPoint, h::LasHeader)
+function Base.convert(::Type{Point{3, Float32}}, p::LasPoint, h::LasHeader12)
     Point{3, Float32}(xcoord(p, h), ycoord(p, h), zcoord(p, h))
 end

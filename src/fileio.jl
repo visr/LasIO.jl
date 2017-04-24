@@ -1,5 +1,5 @@
 
-function pointformat(header::LasHeader)
+function pointformat(header::LasHeader12)
     id = header.data_format_id
     if id == 0x00
         return LasPoint0
@@ -22,7 +22,7 @@ function load(f::File{format"LAS"})
 end
 
 function load(s::Stream{format"LAS"})
-    header = read(s, LasHeader)
+    header = read(s, LasHeader12)
 
     seek(s, header.data_offset)
     n = header.records_count
@@ -36,21 +36,21 @@ end
 
 function read_header(f::AbstractString)
     open(f) do s
-        read(s, LasHeader)
+        read(s, LasHeader12)
     end
 end
 
 function read_header(s::IO)
-    read(s, LasHeader)
+    read(s, LasHeader12)
 end
 
-function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T})
+function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader12, pointdata::Vector{T})
     open(f, "w") do s
         save(s, header, pointdata)
     end
 end
 
-function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T})
+function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader12, pointdata::Vector{T})
     # checks
     header_n = header.records_count
     n = length(pointdata)

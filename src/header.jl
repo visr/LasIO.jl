@@ -14,7 +14,7 @@ Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only le
 content
 =#
 
-type LasHeader
+type LasHeader12
     file_source_id::UInt16
     global_encoding::UInt16
     guid_1::UInt32
@@ -50,12 +50,12 @@ type LasHeader
     user_defined_bytes::Vector{UInt8}
 end
 
-function Base.show(io::IO, header::LasHeader)
+function Base.show(io::IO, header::LasHeader12)
     n = Int(header.records_count)
-    println(io, "LasHeader with $n points.")
+    println(io, "LasHeader12 with $n points.")
 end
 
-function Base.showall(io::IO, h::LasHeader)
+function Base.showall(io::IO, h::LasHeader12)
     show(io, h)
     println(io, string("\tfile_source_id = ", h.file_source_id))
     println(io, string("\tglobal_encoding = ", h.global_encoding))
@@ -115,7 +115,7 @@ function writestring(io, str::AbstractString, nb::Integer)
 end
 
 
-function Base.read(io::IO, ::Type{LasHeader})
+function Base.read(io::IO, ::Type{LasHeader12})
     seek(io, 4)  # after LASF
     file_source_id = read(io, UInt16)
     global_encoding = read(io, UInt16)
@@ -152,7 +152,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     user_defined_bytes = read(io, data_offset - position(io))
 
     # put it all in a type
-    header = LasHeader(
+    header = LasHeader12(
         file_source_id,
         global_encoding,
         guid_1,
@@ -190,7 +190,7 @@ function Base.read(io::IO, ::Type{LasHeader})
 end
 
 
-function Base.write(io::IO, h::LasHeader)
+function Base.write(io::IO, h::LasHeader12)
     write(io, h.file_source_id)
     write(io, h.global_encoding)
     write(io, h.guid_1)
@@ -241,4 +241,4 @@ end
 If false, GPS Time is GPS Week Time.
 
 Note that not all software sets this encoding correctly."""
-is_standard_gps(h::LasHeader) = isodd(h.global_encoding)
+is_standard_gps(h::LasHeader12) = isodd(h.global_encoding)
