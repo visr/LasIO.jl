@@ -36,6 +36,9 @@ end
 @testset "LasIO" begin
 
 
+include("fixedstrings.jl")
+
+
 @testset "Loading and saving" begin
     # reading point by point
     open(testfile) do io

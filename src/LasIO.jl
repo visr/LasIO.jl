@@ -6,6 +6,7 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using Compat
 
 export
     # Types
@@ -46,6 +47,7 @@ export
     blue,
     RGB
 
+include("fixedstrings.jl")
 include("vlrs.jl")
 include("header.jl")
 include("point.jl")
