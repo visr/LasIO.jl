@@ -1,20 +1,6 @@
-# the header implemented based on LAS 1.2
-# TODO: check compatibility other LAS versions
+@compat abstract type LasHeader ; end
 
-#=
-COMPATIBILITY WITH LAS 1.2:
-One unavoidable change has been made to the Public Header Block; Start of Waveform
-Data Packet Record. This long, long has been added to the end of the block and thus
-little or no change will be needed in LAS 1.2 readers that do not need waveform data.
-There are no changes to Point Data Record types 0 through 3. The waveform encoded
-data types have been added as Point Data Record types 4 and 5.
-
-THE ADDITIONS OF LAS 1.4 INCLUDE:
-Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only legacy
-content
-=#
-
-type LasHeader12
+type LasHeader12 <: LasHeader
     file_source_id::UInt16
     global_encoding::UInt16
     guid_1::UInt32
@@ -50,52 +36,26 @@ type LasHeader12
     user_defined_bytes::Vector{UInt8}
 end
 
-function Base.show(io::IO, header::LasHeader12)
+function Base.show(io::IO, header::LasHeader)
     n = Int(header.records_count)
-    println(io, "LasHeader12 with $n points.")
+    print(io, "LasHeader12 with $n points.")
 end
 
-function Base.showall(io::IO, h::LasHeader12)
+function Base.showall(io::IO, h::LasHeader)
     show(io, h)
-    println(io, string("\tfile_source_id = ", h.file_source_id))
-    println(io, string("\tglobal_encoding = ", h.global_encoding))
-    println(io, string("\tguid_1 = ", h.guid_1))
-    println(io, string("\tguid_2 = ", h.guid_2))
-    println(io, string("\tguid_3 = ", h.guid_3))
-    println(io, string("\tguid_4 = ", h.guid_4))
-    println(io, string("\tversion_major = ", h.version_major))
-    println(io, string("\tversion_minor = ", h.version_minor))
-    println(io, string("\tsystem_id = ", h.system_id))
-    println(io, string("\tsoftware_id = ", h.software_id))
-    println(io, string("\tcreation_doy = ", h.creation_doy))
-    println(io, string("\tcreation_year = ", h.creation_year))
-    println(io, string("\theader_size = ", h.header_size))
-    println(io, string("\tdata_offset = ", h.data_offset))
-    println(io, string("\tn_vlr = ", h.n_vlr))
-    println(io, string("\tdata_format_id = ", h.data_format_id))
-    println(io, string("\tdata_record_length = ", h.data_record_length))
-    println(io, string("\trecords_count = ", h.records_count))
-    println(io, string("\tpoint_return_count = ", h.point_return_count))
-    println(io, string("\tx_scale = ", h.x_scale))
-    println(io, string("\ty_scale = ", h.y_scale))
-    println(io, string("\tz_scale = ", h.z_scale))
-    println(io, string("\tx_offset = ", h.x_offset))
-    println(io, string("\ty_offset = ", h.y_offset))
-    println(io, string("\tz_offset = ", h.z_offset))
-    println(io, string("\tx_max = ", h.x_max))
-    println(io, string("\tx_min = ", h.x_min))
-    println(io, string("\ty_max = ", h.y_max))
-    println(io, string("\ty_min = ", h.y_min))
-    println(io, string("\tz_max = ", h.z_max))
-    println(io, string("\tz_min = ", h.z_min))
-    println(io, string("\tvariable_length_records = "))
-    for vlr in h.variable_length_records
-        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(length(vlr.data)) bytes...)")
+    for name in fieldnames(h)
+        if name == :variable_length_records
+            println(io, string("\tvariable_length_records = "))
+            for vlr in h.variable_length_records
+                println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(length(vlr.data)) bytes...)")
+            end
+        else
+            println(io, string("\t$name = $(getfield(h,name))"))
+        end
     end
 end
 
-
-function Base.read(io::IO, ::Type{LasHeader12})
+function Base.read{Header<:LasHeader}(io::IO, ::Type{Header})
     seek(io, 4)  # after LASF
     file_source_id = read(io, UInt16)
     global_encoding = read(io, UInt16)
