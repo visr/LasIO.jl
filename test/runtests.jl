@@ -3,11 +3,19 @@ using LasIO
 using Base.Test
 
 workdir = dirname(@__FILE__)
+
+# input files
 # source: http://www.liblas.org/samples/
-filename = "libLAS_1.2.las" # point format 0
-filename_laz = "libLAS_1.2.laz" # point format 0
-testfile = joinpath(workdir, filename)
-writefile = joinpath(workdir, "libLAS_1.2-out.las")
+las_in_path = joinpath(workdir, "libLAS_1.2.las") # point format 0
+laz_in_path = joinpath(workdir, "libLAS_1.2.laz") # point format 0
+srsfile = joinpath(workdir, "srs.las")
+
+# output files
+las_out_path = joinpath(workdir, "libLAS_1.2-out.las")
+las2laz_path = joinpath(workdir, "libLAS_1.2-las2laz.laz")
+laz2las_path = joinpath(workdir, "libLAS_1.2-laz2las.las")
+srsfile_out = joinpath(workdir, "srs-out.las")
+const dorm = true # do_remove, if written test files are cleaned up or not
 
 "Find the centroid of all points in a LAS file"
 function centroid(io, header)
@@ -35,7 +43,7 @@ function centroid(io, header)
 end
 
 # reading point by point
-open(testfile) do io
+open(las_in_path) do io
     header = read(io, LasHeader)
 
     seek(io, header.data_offset)
@@ -80,32 +88,38 @@ end
 
 # reading complete file into memory
 # test if output file matches input file
-header, pointdata = load(testfile)
+header, pointdata = load(las_in_path)
 n = length(pointdata)
-save(writefile, header, pointdata)
-@test hash(read(testfile)) == hash(read(writefile))
-rm(writefile)
+save(las_out_path, header, pointdata)
+@test hash(read(las_in_path)) == hash(read(las_out_path))
+dorm && rm(las_out_path)
 
-# LAZ
-headerlaz, pointdatalaz = load(filename_laz)
+# LAZ -> LAS
+headerlaz, pointdatalaz = load(laz_in_path)
 @test all(pointdata .== pointdatalaz)
 # TODO add function for comparing LasHeader
-save(writefile, lasformat(headerlaz), pointdatalaz)
+save(laz2las_path, lasformat(headerlaz), pointdatalaz)
 # check if the LAZ->LAS compares to the original LAS file on disk
 # LAZ file was generated with LASzip
-@test hash(read(testfile)) == hash(read(writefile))
-rm(writefile)
+@test hash(read(las_in_path)) == hash(read(laz2las_path))
+dorm && rm(laz2las_path)
+
+# LAS -> LAZ
+save(las2laz_path, lazformat(header), pointdata)
+# test below won't work since LASzip VLR is slightly different
+# with another description and LASzip minor version
+# @test hash(read(laz_in_path)) == hash(read(las2laz_path))
+@test hash(read(las2laz_path)) == 0x0c36585311a3eea2
+dorm && rm(las2laz_path)
 
 # memory mapping the point data
-open(testfile) do io
+open(las_in_path) do io
     seek(io, header.data_offset)
     ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
     @test ptdata == pointdata
 end
 
 # testing a las file version 1.0 point format 1 file with VLRs
-srsfile = joinpath(workdir, "srs.las")
-srsfile_out = joinpath(workdir, "srs-out.las")
 srsheader, srspoints = load(srsfile)
 @test srsheader.version_major == 1
 @test srsheader.version_minor == 0
@@ -127,4 +141,4 @@ end
 
 save(srsfile_out, srsheader, srspoints)
 @test hash(read(srsfile)) == hash(read(srsfile_out))
-rm(srsfile_out)
+dorm && rm(srsfile_out)

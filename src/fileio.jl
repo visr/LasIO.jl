@@ -45,6 +45,17 @@ function read_header(s::IO)
     read(s, LasHeader)
 end
 
+
+function validate{T<:LasPoint}(header::LasHeader, pointdata::Vector{T})
+    # this is a cheap validation that checks only the number of points
+    # and is done on every write
+    # perhaps make a more extensive validation function that is not always run?
+    header_n = header.records_count
+    n = length(pointdata)
+    msg = "number of records in header ($header_n) does not match data length ($n)"
+    @assert header_n == n msg
+end
+
 function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T})
     open(f, "w") do s
         save(s, header, pointdata)
@@ -52,20 +63,17 @@ function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader, pointdata::V
 end
 
 function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T})
-    # checks
-    header_n = header.records_count
-    n = length(pointdata)
-    msg = "number of records in header ($header_n) does not match data length ($n)"
-    @assert header_n == n msg
+    validate(header, pointdata)
 
     # write header
     write(s, magic(format"LAS"))
+    header = lasformat(header)
     write(s, header)
     bytes_togo = header.data_offset - position(s)
     @assert bytes_togo == 0
 
     # write points
-    for i = 1:n
-        write(s, pointdata[i])
+    for p in pointdata
+        write(s, p)
     end
 end

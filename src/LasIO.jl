@@ -21,6 +21,7 @@ export
     # Functions on LasHeader
     update!,
     lasformat,
+    lazformat,
 
     # Functions on LasPoint
     return_number,
