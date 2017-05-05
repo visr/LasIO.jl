@@ -121,7 +121,11 @@ end
 
 "Returns the number of bytes between the end of the VLRs on the header to the data offset"
 function LibLAS.headerpadding(h::LasHeader)
-    vlrsize = sum((54 + length(vlr.data)) for vlr in h.variable_length_records)
+    if h.n_vlr == 0
+        vlrsize = 0
+    else
+        vlrsize = sum((54 + length(vlr.data)) for vlr in h.variable_length_records)
+    end
     UInt32(h.data_offset - h.header_size - vlrsize)
 end
 
@@ -131,9 +135,9 @@ LibLAS.compressed(h::LasHeader) = Int32((h.data_format_id & 0x80) >> 7)
 "Add the color from a LasIO.LasPointColor to a LibLAS.LASPoint"
 function LibLAS.color!(pll::LibLAS.LASPoint, pio::LasPointColor)
     color = LibLAS.create(LibLAS.LASColor)
-    red(color, reinterpret(UInt16, red(pio)))
-    green(color, reinterpret(UInt16, green(pio)))
-    blue(color, reinterpret(UInt16, blue(pio)))
+    LibLAS.red(color, reinterpret(UInt16, red(pio)))
+    LibLAS.green(color, reinterpret(UInt16, green(pio)))
+    LibLAS.blue(color, reinterpret(UInt16, blue(pio)))
     LibLAS.color!(pll, color)
 end
 

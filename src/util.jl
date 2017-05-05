@@ -2,6 +2,8 @@
 function update!{T<:LasPoint}(h::LasHeader, pvec::Vector{T})
     x_min, y_min, z_min = Inf, Inf, Inf
     x_max, y_max, z_max = -Inf, -Inf, -Inf
+    point_return_count = zeros(UInt32, 5)
+
     for p in pvec
         x, y, z = xcoord(p, h), ycoord(p, h), zcoord(p, h)
         if x < x_min
@@ -22,6 +24,8 @@ function update!{T<:LasPoint}(h::LasHeader, pvec::Vector{T})
         if z > z_max
             z_max = z
         end
+        # add max statement to ensure no accidental zeros are passed
+        point_return_count[max(1, return_number(p))] += 1
     end
     h.x_min = x_min
     h.y_min = y_min
@@ -30,5 +34,6 @@ function update!{T<:LasPoint}(h::LasHeader, pvec::Vector{T})
     h.y_max = y_max
     h.z_max = z_max
     h.records_count = length(pvec)
+    h.point_return_count = point_return_count
     nothing
 end
