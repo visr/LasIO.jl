@@ -3,3 +3,4 @@ ColorTypes 0.3
 FixedPointNumbers 0.3
 FileIO 0.2
 GeometryTypes 0.2
+Compat 0.18
