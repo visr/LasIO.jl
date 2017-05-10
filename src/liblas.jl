@@ -300,7 +300,9 @@ function save{T<:LasPoint}(f::File{format"LAZ"}, header::LasHeader, pointdata::V
     for pio in pointdata
         pll = LibLAS.LASPoint(pio)
         LibLAS.writepoint(writer, pll)
+        LibLAS.destroy(pll)
     end
 
     LibLAS.destroy(writer)
+    LibLAS.destroy(llheader)
 end
