@@ -141,6 +141,16 @@ function LibLAS.color!(pll::LibLAS.LASPoint, pio::LasPointColor)
     LibLAS.color!(pll, color)
 end
 
+"Free the memory used to store the color"
+function freecolor!{T<:LasPointColor}(pll::LibLAS.LASPoint, pointtype::Type{T})
+    color = LibLAS.color(pll)
+    LibLAS.destroy(color)
+    nothing
+end
+
+"Fallback for non color bearing point types, does nothing"
+freecolor!{T<:LasPoint}(pll::LibLAS.LASPoint, pointtype::Type{T}) = nothing
+
 "Create a LibLAS.LASHeader from a LasIO.LasHeader"
 function LibLAS.LASHeader(hio::LasHeader)
     # create an empty header
@@ -300,6 +310,7 @@ function save{T<:LasPoint}(f::File{format"LAZ"}, header::LasHeader, pointdata::V
     for pio in pointdata
         pll = LibLAS.LASPoint(pio)
         LibLAS.writepoint(writer, pll)
+        freecolor!(pll, T)
         LibLAS.destroy(pll)
     end
 
