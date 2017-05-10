@@ -4,3 +4,4 @@ FixedPointNumbers 0.3
 FileIO 0.2
 GeometryTypes 0.2
 LibLAS
+Compat 0.18

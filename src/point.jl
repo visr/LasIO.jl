@@ -1,6 +1,6 @@
 
 "Abstract type for ASPRS LAS point data record formats 0 - 3"
-abstract LasPoint
+@compat abstract type LasPoint end
 
 function Base.show{T<:LasPoint}(io::IO, pointdata::Vector{T})
     n = size(pointdata, 1)
@@ -68,8 +68,8 @@ immutable LasPoint3 <: LasPoint
 end
 
 # for convenience in function signatures
-typealias LasPointColor Union{LasPoint2, LasPoint3}
-typealias LasPointTime Union{LasPoint1, LasPoint3}
+const LasPointColor = Union{LasPoint2,LasPoint3}
+const LasPointTime = Union{LasPoint1,LasPoint3}
 
 function Base.show(io::IO, p::LasPoint)
     z = Int(p.z)

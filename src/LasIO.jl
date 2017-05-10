@@ -6,6 +6,7 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using Compat
 import LibLAS # for LAZ support, imported to avoid naming conflicts
 
 export
