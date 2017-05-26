@@ -44,3 +44,7 @@ function Base.write(io::IO, vlr::LasVariableLengthRecord, extended::Bool=false)
     write(io, vlr.data)
     nothing
 end
+
+# size of a VLR in bytes
+# assumes it is not extended VLR
+Base.sizeof(vlr::LasVariableLengthRecord) = 54 + length(vlr.data)

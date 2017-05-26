@@ -114,9 +114,7 @@ function writestring(io, str::AbstractString, nb::Integer)
     end
 end
 
-
 function Base.read(io::IO, ::Type{LasHeader})
-    seek(io, 4)  # after LASF
     file_source_id = read(io, UInt16)
     global_encoding = read(io, UInt16)
     guid_1 = read(io, UInt32)
@@ -154,7 +152,13 @@ function Base.read(io::IO, ::Type{LasHeader})
         _ = read(io, UInt64)
     end
     vlrs = [read(io, LasVariableLengthRecord, false) for i=1:n_vlr]
-    user_defined_bytes = read(io, data_offset - position(io))
+
+    # From here until the data_offset everything is read in
+    # as user_defined_bytes. To avoid a seek that we cannot do on STDIN,
+    # we calculate how much to read in.
+    vlrlength = n_vlr == 0 ? 0 : sum(sizeof, vlrs)
+    pos = header_size + vlrlength
+    user_defined_bytes = read(io, data_offset - pos)
 
     # put it all in a type
     header = LasHeader(
@@ -193,7 +197,6 @@ function Base.read(io::IO, ::Type{LasHeader})
         user_defined_bytes
     )
 end
-
 
 function Base.write(io::IO, h::LasHeader)
     write(io, h.file_source_id)

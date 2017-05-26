@@ -35,6 +35,8 @@ end
 
 # reading point by point
 open(testfile) do io
+    # magic bytes
+    @test String(read(io, 4)) == "LASF"
     header = read(io, LasHeader)
 
     seek(io, header.data_offset)
