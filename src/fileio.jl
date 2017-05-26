@@ -60,11 +60,45 @@ function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata:
     # write header
     write(s, magic(format"LAS"))
     write(s, header)
-    bytes_togo = header.data_offset - position(s)
-    @assert bytes_togo == 0
 
     # write points
-    for i = 1:n
-        write(s, pointdata[i])
+    for p in pointdata
+        write(s, p)
+    end
+end
+
+function save{T<:LasPoint}(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T})
+    # pipes the written las to laszip to write laz
+    open(`laszip -stdin -o "$(filename(f))"`, "w") do s
+        savebuf(s, header, pointdata)
+    end
+end
+
+# Uses a buffered write to the stream.
+# For saving to LAS this does not increase speed,
+# but it speeds up a lot when the result is piped to laszip.
+function savebuf{T<:LasPoint}(s::IO, header::LasHeader, pointdata::Vector{T})
+    # checks
+    header_n = header.records_count
+    n = length(pointdata)
+    msg = "number of records in header ($header_n) does not match data length ($n)"
+    @assert header_n == n msg
+
+    # write header
+    write(s, magic(format"LAS"))
+    write(s, header)
+
+    # 2048 points seemed to be an optimum for the libLAS_1.2.las testfile
+    npoints_buffered = 2048
+    bufsize = header.data_record_length * npoints_buffered
+    buf = IOBuffer(bufsize)
+    # write points
+    for (i, p) in enumerate(pointdata)
+        write(buf, p)
+        if rem(i, npoints_buffered) == 0
+            write(s, take!(buf))
+        elseif i == n
+            write(s, take!(buf))
+        end
     end
 end
