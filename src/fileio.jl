@@ -14,17 +14,19 @@ function pointformat(header::LasHeader)
     end
 end
 
+# skip the LAS file's magic four bytes, "LASF"
+skipmagic(s::Union{Stream{format"LAS"}, IO}) = read(s, UInt32)
+
 function load(f::File{format"LAS"})
     open(f) do s
-        skipmagic(s) # skip over the magic bytes
         load(s)
     end
 end
 
-function load(s::Stream{format"LAS"})
+function load(s::Union{Stream{format"LAS"}, Pipe})
+    skipmagic(s)
     header = read(s, LasHeader)
 
-    seek(s, header.data_offset)
     n = header.records_count
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(n)
@@ -34,13 +36,22 @@ function load(s::Stream{format"LAS"})
     header, pointdata
 end
 
+function load(f::File{format"LAZ"})
+    # read las from laszip, which decompresses to stdout
+    open(`laszip -olas -stdout -i "$(filename(f))"`) do s
+        load(s)
+    end
+end
+
 function read_header(f::AbstractString)
     open(f) do s
+        skipmagic(s)
         read(s, LasHeader)
     end
 end
 
 function read_header(s::IO)
+    skipmagic(s)
     read(s, LasHeader)
 end
 
@@ -68,8 +79,8 @@ function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata:
 end
 
 function save{T<:LasPoint}(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T})
-    # pipes the written las to laszip to write laz
-    open(`laszip -stdin -o "$(filename(f))"`, "w") do s
+    # pipes las to laszip to write laz
+    open(`laszip -olaz -stdin -o "$(filename(f))"`, "w") do s
         savebuf(s, header, pointdata)
     end
 end
