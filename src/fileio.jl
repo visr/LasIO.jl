@@ -15,7 +15,7 @@ function pointformat(header::LasHeader)
 end
 
 # skip the LAS file's magic four bytes, "LASF"
-skipmagic(s::Union{Stream{format"LAS"}, IO}) = read(s, UInt32)
+skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
 
 function load(f::File{format"LAS"})
     open(f) do s
@@ -24,7 +24,7 @@ function load(f::File{format"LAS"})
 end
 
 function load(s::Union{Stream{format"LAS"}, Pipe})
-    skipmagic(s)
+    skiplasf(s)
     header = read(s, LasHeader)
 
     n = header.records_count
@@ -45,13 +45,13 @@ end
 
 function read_header(f::AbstractString)
     open(f) do s
-        skipmagic(s)
+        skiplasf(s)
         read(s, LasHeader)
     end
 end
 
 function read_header(s::IO)
-    skipmagic(s)
+    skiplasf(s)
     read(s, LasHeader)
 end
 
