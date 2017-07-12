@@ -38,7 +38,7 @@ end
 
 function load(f::File{format"LAZ"})
     # read las from laszip, which decompresses to stdout
-    open(`laszip -olas -stdout -i "$(filename(f))"`) do s
+    open(pipeline(`laszip -olas -stdout -i "$(filename(f))"`, `dd bs=2`), "r") do s
         load(s)
     end
 end
@@ -80,7 +80,7 @@ end
 
 function save{T<:LasPoint}(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T})
     # pipes las to laszip to write laz
-    open(`laszip -olaz -stdin -o "$(filename(f))"`, "w") do s
+    open(pipeline(`dd bs=2`, `laszip -olaz -stdin -o "$(filename(f))"`), "w") do s
         savebuf(s, header, pointdata)
     end
 end
