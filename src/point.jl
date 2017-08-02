@@ -1,14 +1,14 @@
 
 "Abstract type for ASPRS LAS point data record formats 0 - 3"
-@compat abstract type LasPoint end
+abstract type LasPoint end
 
-function Base.show{T<:LasPoint}(io::IO, pointdata::Vector{T})
+function Base.show(io::IO, pointdata::Vector{T}) where T <: LasPoint
     n = size(pointdata, 1)
     println(io, "Vector{$T} with $n points.")
 end
 
 "ASPRS LAS point data record format 0"
-immutable LasPoint0 <: LasPoint
+struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -21,7 +21,7 @@ immutable LasPoint0 <: LasPoint
 end
 
 "ASPRS LAS point data record format 1"
-immutable LasPoint1 <: LasPoint
+struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -35,7 +35,7 @@ immutable LasPoint1 <: LasPoint
 end
 
 "ASPRS LAS point data record format 2"
-immutable LasPoint2 <: LasPoint
+struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -51,7 +51,7 @@ immutable LasPoint2 <: LasPoint
 end
 
 "ASPRS LAS point data record format 3"
-immutable LasPoint3 <: LasPoint
+struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32

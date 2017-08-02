@@ -2,7 +2,7 @@
 A LAS "variable length record" - the generic way to store extra user or
 organization defined binary metadata in LAS files.
 """
-immutable LasVariableLengthRecord
+struct LasVariableLengthRecord
     reserved::UInt16
     user_id::AbstractString
     record_id::UInt16

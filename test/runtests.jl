@@ -86,11 +86,16 @@ save(writefile, header, pointdata)
 rm(writefile)
 
 # memory mapping the point data
-open(testfile) do io
-    seek(io, header.data_offset)
-    ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
-    @test ptdata == pointdata
-end
+# currently disabled since it was broken by
+# https://github.com/JuliaLang/julia/pull/21831
+# since the data_offset does not necessarily align on the size of LasPoint
+# TODO support this again, probably using
+# https://github.com/JuliaArrays/UnalignedVectors.jl
+# open(testfile) do io
+#     seek(io, header.data_offset)
+#     ptdata = Mmap.mmap(io, Vector{LasPoint0}, n)
+#     @test ptdata == pointdata
+# end
 
 # testing a las file version 1.0 point format 1 file with VLRs
 srsfile = joinpath(workdir, "srs.las")

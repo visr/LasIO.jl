@@ -44,13 +44,13 @@ function read_header(s::IO)
     read(s, LasHeader)
 end
 
-function save{T<:LasPoint}(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T})
+function save(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
     open(f, "w") do s
         save(s, header, pointdata)
     end
 end
 
-function save{T<:LasPoint}(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T})
+function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
     # checks
     header_n = header.records_count
     n = length(pointdata)

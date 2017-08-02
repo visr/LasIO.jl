@@ -14,7 +14,7 @@ Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only le
 content
 =#
 
-type LasHeader
+mutable struct LasHeader
     file_source_id::UInt16
     global_encoding::UInt16
     guid_1::UInt32
@@ -135,7 +135,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     data_format_id = read(io, UInt8)
     data_record_length = read(io, UInt16)
     records_count = read(io, UInt32)
-    point_return_count = read(io, UInt32, 5)
+    point_return_count = read!(io, Vector{UInt32}(5))
     x_scale = read(io, Float64)
     y_scale = read(io, Float64)
     z_scale = read(io, Float64)

@@ -1,6 +1,7 @@
 # LasIO
 
 [![Build Status](https://travis-ci.org/visr/LasIO.jl.svg?branch=master)](https://travis-ci.org/visr/LasIO.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/visr/LasIO.jl?svg=true&branch=master)](https://ci.appveyor.com/project/visr/lasio-jl/branch/master)
 
 Julia package for reading and writing the LAS lidar format.
 

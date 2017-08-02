@@ -1,5 +1,5 @@
 "Update the header bounding box and count based on point data"
-function update!{T<:LasPoint}(h::LasHeader, pvec::Vector{T})
+function update!(h::LasHeader, pvec::Vector{T}) where T <: LasPoint
     x_min, y_min, z_min = Inf, Inf, Inf
     x_max, y_max, z_max = -Inf, -Inf, -Inf
     for p in pvec
