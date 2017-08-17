@@ -148,6 +148,11 @@ function Base.read(io::IO, ::Type{LasHeader})
     y_min = read(io, Float64)
     z_max = read(io, Float64)
     z_min = read(io, Float64)
+    lasversion = VersionNumber(version_major, version_minor)
+    if lasversion >= v"1.3"
+         # start of waveform data record (unsupported)
+        _ = read(io, UInt64)
+    end
     vlrs = [read(io, LasVariableLengthRecord, false) for i=1:n_vlr]
     user_defined_bytes = read(io, data_offset - position(io))
 
@@ -226,7 +231,8 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.z_min)
     lasversion = VersionNumber(h.version_major, h.version_minor)
     if lasversion >= v"1.3"
-        write(io, 0x0000) # Start of waveform data record (unsupported)
+        # start of waveform data record (unsupported)
+        write(io, UInt64(0))
     end
     for i in 1:h.n_vlr
         write(io, h.variable_length_records[i])
