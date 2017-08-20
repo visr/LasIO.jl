@@ -38,7 +38,7 @@ end
 
 function load(f::File{format"LAZ"})
     # read las from laszip, which decompresses to stdout
-    open(`laszip -olas -stdout -i "$(filename(f))"`) do s
+    open(`laszip -olas -stdout -i $(filename(f))`) do s
         load(s)
     end
 end
@@ -80,7 +80,7 @@ end
 
 function save(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
     # pipes las to laszip to write laz
-    open(`laszip -olaz -stdin -o "$(filename(f))"`, "w") do s
+    open(`laszip -olaz -stdin -o $(filename(f))`, "w") do s
         savebuf(s, header, pointdata)
     end
 end
@@ -106,9 +106,7 @@ function savebuf(s::IO, header::LasHeader, pointdata::Vector{T}) where T <: LasP
     # write points
     for (i, p) in enumerate(pointdata)
         write(buf, p)
-        if rem(i, npoints_buffered) == 0
-            write(s, take!(buf))
-        elseif i == n
+        if rem(i, npoints_buffered) == 0 || i == n
             write(s, take!(buf))
         end
     end
