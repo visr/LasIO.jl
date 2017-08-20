@@ -56,6 +56,7 @@ function __init__()
     # these should eventually go in
     # https://github.com/JuliaIO/FileIO.jl/blob/master/src/registry.jl
     add_format(format"LAS", "LASF", ".las", [:LasIO])
+    add_format(format"LAZ", (), ".laz", [:LasIO])
 end
 
 end # module
