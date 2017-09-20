@@ -103,6 +103,18 @@ rm(writefile)
 srsfile = joinpath(workdir, "srs.las")
 srsfile_out = joinpath(workdir, "srs-out.las")
 srsheader, srspoints = load(srsfile)
+for record in srsheader.variable_length_records
+    @test record.reserved === 0xaabb
+    @test record.user_id == "LASF_Projection"
+    @test typeof(record.description) == String
+    if record.record_id == 34735
+        @test record.data.key_directory_version === UInt16(1)
+        @test record.data.key_reversion === UInt16(1)
+        @test record.data.minor_revision === UInt16(0)
+        @test record.data.number_of_keys === UInt16(length((record.data.keys)))
+        @test typeof(record.data.keys) == Vector{LasIO.KeyEntry}
+    end
+end
 @test srsheader.version_major == 1
 @test srsheader.version_minor == 0
 @test srsheader.data_format_id == 1
@@ -114,12 +126,19 @@ for vlr in srsheader.variable_length_records
     @test vlr.description == ""
 end
 
-@test srsheader.variable_length_records[1].record_id == 34735  # GeoKeyDirectoryTag
-@test srsheader.variable_length_records[2].record_id == 34736  # GeoDoubleParamsTag
-@test srsheader.variable_length_records[3].record_id == 34737  # GeoAsciiParamsTag
-@test srsheader.variable_length_records[1].data[1:4] == [0x01,0x00,0x01,0x00]
-@test all(x -> x === 0x00, srsheader.variable_length_records[2].data)
-@test all(x -> x === 0x00, srsheader.variable_length_records[3].data)
+@test srsheader.variable_length_records[1].record_id == LasIO.id_geokeydirectorytag
+@test srsheader.variable_length_records[2].record_id == LasIO.id_geodoubleparamstag
+@test srsheader.variable_length_records[3].record_id == LasIO.id_geoasciiparamstag
+@test typeof(srsheader.variable_length_records[1].data) == LasIO.GeoKeys
+@test typeof(srsheader.variable_length_records[2].data) == LasIO.GeoDoubleParamsTag
+@test typeof(srsheader.variable_length_records[3].data) == LasIO.GeoAsciiParamsTag
+
+# set the SRS. Note: this will not change points, but merely set SRS-metadata.
+epsgheader = deepcopy(srsheader)
+LasIO.epsg!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS
+@test epsgheader.variable_length_records[1].record_id == LasIO.id_geokeydirectorytag
+@test count(LasIO.is_srs, srsheader.variable_length_records) == 3
+@test count(LasIO.is_srs, epsgheader.variable_length_records) == 1
 
 save(srsfile_out, srsheader, srspoints)
 @test hash(read(srsfile)) == hash(read(srsfile_out))

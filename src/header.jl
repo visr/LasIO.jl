@@ -251,3 +251,12 @@ If false, GPS Time is GPS Week Time.
 
 Note that not all software sets this encoding correctly."""
 is_standard_gps(h::LasHeader) = isodd(h.global_encoding)
+
+"Check if the projection information is in WKT format (true) or GeoTIFF (false)"
+function is_wkt(h::LasHeader)
+    wkit_bit = Bool((h.global_encoding & 0x0010) >> 4)
+    if !wkit_bit && h.data_format_id > 5
+        throw(DomainError("WKT bit must be true for point types higher than 5"))
+    end
+    wkit_bit
+end

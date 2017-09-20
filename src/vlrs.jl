@@ -7,9 +7,8 @@ struct LasVariableLengthRecord
     user_id::AbstractString
     record_id::UInt16
     description::AbstractString
-    data::Vector{UInt8}
+    data  # anything with read+write+length methods, like GeoKeys or Vector{UInt8}
 end
-
 
 # Read a variable length metadata record from a stream.
 #
@@ -22,9 +21,9 @@ function Base.read(io::IO, ::Type{LasVariableLengthRecord}, extended::Bool=false
     reserved = read(io, UInt16)
     user_id = readstring(io, 16)
     record_id = read(io, UInt16)
-    record_data_length = extended ? read(io, UInt64) : read(io, UInt16)
+    record_data_length::Int = extended ? read(io, UInt64) : read(io, UInt16)
     description = readstring(io, 32)
-    data = read(io, record_data_length)
+    data = read_vlr_data(io, record_id, record_data_length)
     LasVariableLengthRecord(
         reserved,
         user_id,
