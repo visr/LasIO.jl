@@ -94,6 +94,20 @@ function write_key_entry(io, entry::KeyEntry)
     write(io, entry.value_offset)
 end
 
+"Get the EPSG code of the projection in the header"
+function epsg(header::LasHeader)
+    if is_wkt(header)
+        throw(ArgumentError("WKT format projection information not implemented"))
+    end
+    vlrs = header.variable_length_records
+    ind = findfirst(x -> x.record_id == id_geokeydirectorytag, vlrs)
+    if ind == 0
+        return Nullable{Int}()
+    else
+        Nullable{Int}(vlrs[ind].data.keys[3].value_offset)
+    end
+end
+
 "Set the projection in the header, without altering the points"
 function epsg!(header::LasHeader, epsg::Integer)
     # read old header metadata
@@ -114,6 +128,8 @@ function epsg!(header::LasHeader, epsg::Integer)
     header.data_offset = old_offset - old_vlrlength + new_vlrlength
     header
 end
+
+epsg!(header::LasHeader, epsg::Nullable{<:Integer}) = epsg!(header, get(epsg))
 
 function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
     if record_id == id_geokeydirectorytag
