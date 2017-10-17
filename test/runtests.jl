@@ -56,7 +56,7 @@ open(testfile) do io
     @test zcoord(p, header) ≈ 846.66
     @test zcoord(846.66, header) ≈ p.z
     @test intensity(p) === 0x00fa
-    @test scan_angle(p) === 0x00
+    @test scan_angle(p) === Int8(0)
     @test user_data(p) === 0x00
     @test pt_src_id(p) === 0x001d
     @test return_number(p) === 0x00

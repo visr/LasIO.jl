@@ -15,7 +15,7 @@ struct LasPoint0 <: LasPoint
     intensity::UInt16
     flag_byte::UInt8
     raw_classification::UInt8
-    scan_angle::UInt8
+    scan_angle::Int8
     user_data::UInt8
     pt_src_id::UInt16
 end
@@ -28,7 +28,7 @@ struct LasPoint1 <: LasPoint
     intensity::UInt16
     flag_byte::UInt8
     raw_classification::UInt8
-    scan_angle::UInt8
+    scan_angle::Int8
     user_data::UInt8
     pt_src_id::UInt16
     gps_time::Float64
@@ -42,7 +42,7 @@ struct LasPoint2 <: LasPoint
     intensity::UInt16
     flag_byte::UInt8
     raw_classification::UInt8
-    scan_angle::UInt8
+    scan_angle::Int8
     user_data::UInt8
     pt_src_id::UInt16
     red::N0f16
@@ -58,7 +58,7 @@ struct LasPoint3 <: LasPoint
     intensity::UInt16
     flag_byte::UInt8
     raw_classification::UInt8
-    scan_angle::UInt8
+    scan_angle::Int8
     user_data::UInt8
     pt_src_id::UInt16
     gps_time::Float64
@@ -102,7 +102,7 @@ function Base.read(io::IO, ::Type{LasPoint0})
     intensity = read(io, UInt16)
     flag_byte = read(io, UInt8)
     raw_classification = read(io, UInt8)
-    scan_angle = read(io, UInt8)
+    scan_angle = read(io, Int8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     LasPoint0(
@@ -125,7 +125,7 @@ function Base.read(io::IO, ::Type{LasPoint1})
     intensity = read(io, UInt16)
     flag_byte = read(io, UInt8)
     raw_classification = read(io, UInt8)
-    scan_angle = read(io, UInt8)
+    scan_angle = read(io, Int8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
@@ -151,7 +151,7 @@ function Base.read(io::IO, ::Type{LasPoint2})
     intensity = read(io, UInt16)
     flag_byte = read(io, UInt8)
     raw_classification = read(io, UInt8)
-    scan_angle = read(io, UInt8)
+    scan_angle = read(io, Int8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     red = reinterpret(N0f16, read(io, UInt16))
@@ -181,7 +181,7 @@ function Base.read(io::IO, ::Type{LasPoint3})
     intensity = read(io, UInt16)
     flag_byte = read(io, UInt8)
     raw_classification = read(io, UInt8)
-    scan_angle = read(io, UInt8)
+    scan_angle = read(io, Int8)
     user_data = read(io, UInt8)
     pt_src_id = read(io, UInt16)
     gps_time = read(io, Float64)
