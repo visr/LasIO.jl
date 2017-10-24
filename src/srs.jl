@@ -110,6 +110,11 @@ end
 
 "Set the projection in the header, without altering the points"
 function epsg!(header::LasHeader, epsg::Integer)
+    # small check if epsg is valid
+    if epsg < 0
+        throw(ArgumentError("EPSG is not valid: negative integer input given"))
+    end
+
     # read old header metadata
     old_vlrlength = header.n_vlr == 0 ? 0 : sum(sizeof, header.variable_length_records)
     old_offset = header.data_offset
