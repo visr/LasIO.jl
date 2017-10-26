@@ -133,11 +133,11 @@ end
 @test typeof(srsheader.variable_length_records[2].data) == LasIO.GeoDoubleParamsTag
 @test typeof(srsheader.variable_length_records[3].data) == LasIO.GeoAsciiParamsTag
 
-@test isnull(LasIO.epsg(header))
-@test LasIO.epsg(srsheader) === Nullable{Int}(32617)
+@test isnull(LasIO.epsg_code(header))
+@test LasIO.epsg_code(srsheader) === Nullable{Int}(32617)
 # set the SRS. Note: this will not change points, but merely set SRS-metadata.
 epsgheader = deepcopy(srsheader)
-LasIO.epsg!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS
+LasIO.epsg_code!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS
 @test epsgheader.variable_length_records[1].record_id == LasIO.id_geokeydirectorytag
 @test count(LasIO.is_srs, srsheader.variable_length_records) == 3
 @test count(LasIO.is_srs, epsgheader.variable_length_records) == 1

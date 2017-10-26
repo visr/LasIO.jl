@@ -1,6 +1,6 @@
 struct KeyEntry
     keyid::UInt16
-    tifftaglocation::UInt16
+    tiff_tag_location::UInt16
     count::UInt16
     value_offset::UInt16
 end
@@ -11,6 +11,11 @@ struct GeoKeys
     minor_revision::UInt16
     number_of_keys::UInt16
     keys::Vector{KeyEntry}
+end
+
+struct SRID
+    authority::Symbol
+    code::Int64
 end
 
 # version numbers are fixed in the LAS specification
@@ -42,9 +47,11 @@ Base.length(data::GeoDoubleParamsTag) = length(data.double_params) * 8
 Base.length(data::GeoAsciiParamsTag) = data.nb
 
 "Construct a projection VLR based on an EPSG code"
-function LasVariableLengthRecord(header::LasHeader, epsg::Integer)
-    if is_wkt(header)
-        throw(ArgumentError("Setting the SRS in WKT format not implemented"))
+function LasVariableLengthRecord(header::LasHeader, srid::SRID)
+    if srid.authority != :epsg
+        throw(ArgumentError("No other code than EPSG-code is implemented"))
+    elseif srid.code < 0
+        throw(ArgumentError("EPSG is not valid: negative integer input given"))
     end
 
     reserved = 0xAABB
@@ -52,7 +59,7 @@ function LasVariableLengthRecord(header::LasHeader, epsg::Integer)
     description = "GeoTIFF GeoKeyDirectoryTag"
     record_id = id_geokeydirectorytag
 
-    data = GeoKeys(epsg)
+    data = GeoKeys(srid.code)
 
     return LasVariableLengthRecord(
         reserved,
@@ -89,13 +96,13 @@ end
 
 function write_key_entry(io, entry::KeyEntry)
     write(io, entry.keyid)
-    write(io, entry.tifftaglocation)
+    write(io, entry.tiff_tag_location)
     write(io, entry.count)
     write(io, entry.value_offset)
 end
 
 "Get the EPSG code of the projection in the header"
-function epsg(header::LasHeader)
+function epsg_code(header::LasHeader)
     if is_wkt(header)
         throw(ArgumentError("WKT format projection information not implemented"))
     end
@@ -109,10 +116,12 @@ function epsg(header::LasHeader)
 end
 
 "Set the projection in the header, without altering the points"
-function epsg!(header::LasHeader, epsg::Integer)
+function epsg_code!(header::LasHeader, epsg::Integer)
     # small check if epsg is valid
     if epsg < 0
         throw(ArgumentError("EPSG is not valid: negative integer input given"))
+    elseif is_wkt(header)
+        throw(ArgumentError("Setting the SRS in WKT format not implemented"))
     end
 
     # read old header metadata
@@ -121,7 +130,8 @@ function epsg!(header::LasHeader, epsg::Integer)
 
     # reconstruct VLRs
     vlrs = LasVariableLengthRecord[]
-    push!(vlrs, LasVariableLengthRecord(header, epsg))
+    srid = SRID(:epsg,epsg)
+    push!(vlrs, LasVariableLengthRecord(header, srid))
     # keep existing non-SRS VLRs intact
     append!(vlrs, filter(!is_srs, header.variable_length_records))
 
@@ -134,7 +144,7 @@ function epsg!(header::LasHeader, epsg::Integer)
     header
 end
 
-epsg!(header::LasHeader, epsg::Nullable{<:Integer}) = epsg!(header, get(epsg))
+epsg_code!(header::LasHeader, epsg::Nullable{<:Integer}) = epsg_code!(header, get(epsg))
 
 function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
     if record_id == id_geokeydirectorytag
@@ -159,12 +169,12 @@ function Base.read(io::IO, ::Type{GeoKeys})
     keys = KeyEntry[]
     for i in 1:number_of_keys
         keyid = read(io, UInt16)
-        tifftaglocation = read(io, UInt16)
+        tiff_tag_location = read(io, UInt16)
         count = read(io, UInt16)
         value_offset = read(io, UInt16)
         push!(keys, KeyEntry(
             keyid,
-            tifftaglocation,
+            tiff_tag_location,
             count,
             value_offset
         ))
