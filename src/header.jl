@@ -90,7 +90,7 @@ function Base.showall(io::IO, h::LasHeader)
     println(io, string("\tz_min = ", h.z_min))
     println(io, string("\tvariable_length_records = "))
     for vlr in h.variable_length_records
-        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(length(vlr.data)) bytes...)")
+        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
     end
 end
 

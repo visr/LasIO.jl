@@ -41,10 +41,10 @@ is_srs(vlr::LasVariableLengthRecord) = vlr.record_id in (
     id_geodoubleparamstag,
     id_geoasciiparamstag)
 
-# length in number of bytes
-Base.length(data::GeoKeys) = 8 * Int(data.number_of_keys) + 8
-Base.length(data::GeoDoubleParamsTag) = length(data.double_params) * 8
-Base.length(data::GeoAsciiParamsTag) = data.nb
+# number of bytes
+Base.sizeof(data::GeoKeys) = 8 * Int(data.number_of_keys) + 8
+Base.sizeof(data::GeoDoubleParamsTag) = sizeof(data.double_params)
+Base.sizeof(data::GeoAsciiParamsTag) = data.nb
 
 "Construct a projection VLR based on an EPSG code"
 function LasVariableLengthRecord(header::LasHeader, srid::SRID)
