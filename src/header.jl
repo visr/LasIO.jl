@@ -90,7 +90,7 @@ function Base.showall(io::IO, h::LasHeader)
     println(io, string("\tz_min = ", h.z_min))
     println(io, string("\tvariable_length_records = "))
     for vlr in h.variable_length_records
-        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(length(vlr.data)) bytes...)")
+        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
     end
 end
 
@@ -251,3 +251,12 @@ If false, GPS Time is GPS Week Time.
 
 Note that not all software sets this encoding correctly."""
 is_standard_gps(h::LasHeader) = isodd(h.global_encoding)
+
+"Check if the projection information is in WKT format (true) or GeoTIFF (false)"
+function is_wkt(h::LasHeader)
+    wkit_bit = Bool((h.global_encoding & 0x0010) >> 4)
+    if !wkit_bit && h.data_format_id > 5
+        throw(DomainError("WKT bit must be true for point types higher than 5"))
+    end
+    wkit_bit
+end

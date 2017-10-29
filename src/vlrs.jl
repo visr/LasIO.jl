@@ -7,9 +7,8 @@ struct LasVariableLengthRecord
     user_id::AbstractString
     record_id::UInt16
     description::AbstractString
-    data::Vector{UInt8}
+    data  # anything with read+write+sizeof methods, like GeoKeys or Vector{UInt8}
 end
-
 
 # Read a variable length metadata record from a stream.
 #
@@ -22,9 +21,9 @@ function Base.read(io::IO, ::Type{LasVariableLengthRecord}, extended::Bool=false
     reserved = read(io, UInt16)
     user_id = readstring(io, 16)
     record_id = read(io, UInt16)
-    record_data_length = extended ? read(io, UInt64) : read(io, UInt16)
+    record_data_length::Int = extended ? read(io, UInt64) : read(io, UInt16)
     description = readstring(io, 32)
-    data = read(io, record_data_length)
+    data = read_vlr_data(io, record_id, record_data_length)
     LasVariableLengthRecord(
         reserved,
         user_id,
@@ -38,7 +37,7 @@ function Base.write(io::IO, vlr::LasVariableLengthRecord, extended::Bool=false)
     write(io, vlr.reserved)
     writestring(io, vlr.user_id, 16)
     write(io, vlr.record_id)
-    record_data_length = extended ? UInt64(length(vlr.data)) : UInt16(length(vlr.data))
+    record_data_length = extended ? UInt64(sizeof(vlr.data)) : UInt16(sizeof(vlr.data))
     write(io, record_data_length)
     writestring(io, vlr.description, 32)
     write(io, vlr.data)
@@ -47,4 +46,4 @@ end
 
 # size of a VLR in bytes
 # assumes it is not extended VLR
-Base.sizeof(vlr::LasVariableLengthRecord) = 54 + length(vlr.data)
+Base.sizeof(vlr::LasVariableLengthRecord) = 54 + sizeof(vlr.data)
