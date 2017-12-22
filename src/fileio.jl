@@ -17,13 +17,14 @@ end
 # skip the LAS file's magic four bytes, "LASF"
 skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
 
-function load(f::File{format"LAS"})
+function load(f::File{format"LAS"}; stream=false)
     open(f) do s
-        load(s)
+        load(s; stream=stream)
     end
 end
 
-function load(s::Union{Stream{format"LAS"}, Pipe})
+# Load pipe apart since it can't be memory mapped
+function load(s::Pipe)
     skiplasf(s)
     header = read(s, LasHeader)
 
@@ -33,6 +34,27 @@ function load(s::Union{Stream{format"LAS"}, Pipe})
     for i=1:n
         pointdata[i] = read(s, pointtype)
     end
+    header, pointdata
+end
+
+function load(s::Stream{format"LAS"}; stream=false)
+    skiplasf(s)
+    header = read(s, LasHeader)
+
+    n = header.records_count
+    pointtype = pointformat(header)
+    pointdata = Vector{pointtype}(n)
+
+    if stream
+        pointsize = Int(header.data_record_length)
+        pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
+        pointdata = PointVector{pointtype}(pointbytes)
+    else    
+        for i=1:n
+            pointdata[i] = read(s, pointtype)
+        end
+    end
+
     header, pointdata
 end
 

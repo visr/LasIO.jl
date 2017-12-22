@@ -6,8 +6,16 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using StructIO
+# using UnalignedVectors
+# using StaticArrays
 
 export
+    # I/O
+    # loadlas,
+    # loadheader
+    # loadpoints
+
     # Types
     LasHeader,
     LasVariableLengthRecord,
@@ -16,9 +24,11 @@ export
     LasPoint1,
     LasPoint2,
     LasPoint3,
+    PointVector,
 
     # Functions on LasHeader
     update!,
+    pointformat,
 
     # Functions on LasPoint
     return_number,
