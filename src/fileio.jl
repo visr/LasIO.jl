@@ -77,13 +77,13 @@ function read_header(s::IO)
     read(s, LasHeader)
 end
 
-function save(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(f::File{format"LAS"}, header::LasHeader, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
     open(f, "w") do s
         save(s, header, pointdata)
     end
 end
 
-function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
     # checks
     header_n = header.records_count
     n = length(pointdata)
@@ -100,7 +100,7 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T}) w
     end
 end
 
-function save(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(f::File{format"LAZ"}, header::LasHeader, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
     # pipes las to laszip to write laz
     open(`laszip -olaz -stdin -o $(filename(f))`, "w") do s
         savebuf(s, header, pointdata)
@@ -110,7 +110,7 @@ end
 # Uses a buffered write to the stream.
 # For saving to LAS this does not increase speed,
 # but it speeds up a lot when the result is piped to laszip.
-function savebuf(s::IO, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function savebuf(s::IO, header::LasHeader, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
     # checks
     header_n = header.records_count
     n = length(pointdata)
