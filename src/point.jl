@@ -8,33 +8,33 @@ Inspiration taken from UnalignedVector.jl
 and extended it with custom indexing and packing.
 """
 struct PointVector{T} <: AbstractArray{T,1}
-    a::Vector{UInt8}
-    len::Int
-    s::Int
+    data::Vector{UInt8}
+    n::Int
+    pointsize::Int
 
-    function PointVector{T}(a::Vector{UInt8}) where {T}
-        s = packed_sizeof(T)
-        n = length(a) ÷ s
-        n*s == length(a) || throw(DimensionMismatch("length(a) should be a multiple of $(sizeof(T)), got $(length(a))"))
-        new{T}(a, n, s)
+    function PointVector{T}(data::Vector{UInt8}) where {T}
+        pointsize = packed_sizeof(T)
+        n = length(data) ÷ pointsize
+        n*pointsize == length(data) || throw(DimensionMismatch("length(data) should be data multiple of $(packed_sizeof(T)), got $(length(data))"))
+        new{T}(data, n, pointsize)
     end
 end
 
 Base.IndexStyle(::Type{PointVector{T}}) where {T} = IndexLinear()
-Base.length(pv::PointVector) = pv.len
+Base.length(pv::PointVector) = pv.n
 Base.size(pv::PointVector) = (length(pv),)
 
-function Base.getindex(a::PointVector{T}, i::Int) where {T}
-    offset = (i-1) * a.s + 1
-    r = offset:offset + a.s - 1
-    io = IOBuffer(a.a[r])
+function Base.getindex(pv::PointVector{T}, i::Int) where {T}
+    offset = (i-1) * pv.pointsize + 1
+    r = offset:offset + pv.pointsize - 1
+    io = IOBuffer(pv.data[r])
     unpack(io, T)
 end
 
-function Base.setindex!(a::PointVector{T}, val, i::Int) where {T}
-    offset = (i-1) * a.s + 1
-    r = offset:offset + a.s - 1
-    io = IOBuffer(a.a[r])
+function Base.setindex!(pv::PointVector{T}, val, i::Int) where {T}
+    offset = (i-1) * pv.pointsize + 1
+    r = offset:offset + pv.pointsize - 1
+    io = IOBuffer(pv.data[r])
     pack(io, val, T)
 end
 

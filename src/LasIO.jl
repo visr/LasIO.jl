@@ -7,14 +7,8 @@ using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
 using StructIO
-# using UnalignedVectors
-# using StaticArrays
 
 export
-    # I/O
-    # loadlas,
-    # loadheader
-    # loadpoints
 
     # Types
     LasHeader,
