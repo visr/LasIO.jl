@@ -43,9 +43,57 @@ function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T 
     println(io, "Vector{$T} with $n points.")
 end
 
+"Generate read method for structs."
+function generate_read(T::Type)
+    fc = @compat fieldcount(T)
+    types = [fieldtype(T, i) for i = 1:fc]
+
+    # Create unpack function expression
+    function_expression = :(function Base.read(io::IO, t::Type{$T}) end)
+
+    # Create Type call expression and add parameters
+    type_expression = :(($T)())
+    for t in types
+        read_expression = :(read(io, $t))
+        append!(type_expression.args, 0)  # dummy with known length
+        type_expression.args[end] = read_expression
+    end
+
+    # Replace empty function body with Type call
+    function_expression.args[2] = type_expression
+
+    eval(function_expression)
+end
+
+"Generate write method for structs."
+function generate_write(T::Type)
+    # Create unpack function expression
+    function_expression = :(function Base.write(io::IO, T::$T) end)
+
+    body_expression = quote end
+    for t in fieldnames(T)
+        append!(body_expression.args, 0)  # dummy with known length
+        write_expression = :(write(io, T.$t))
+        body_expression.args[end] = write_expression
+    end
+
+    # Return nothing at the end
+    append!(body_expression.args, 0)  # dummy with known length
+    body_expression.args[end] = :(nothing)
+
+    # Replace empty function body with write calls
+    function_expression.args[2] = body_expression
+
+    eval(function_expression)
+end
+
+function generate_io(T::Type)
+    generate_read(T)
+    generate_write(T)
+end
 
 "ASPRS LAS point data record format 0"
-@io struct LasPoint0 <: LasPoint
+struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -55,10 +103,11 @@ end
     scan_angle::Int8
     user_data::UInt8
     pt_src_id::UInt16
-end align_packed
+end
+generate_io(LasPoint0)
 
 "ASPRS LAS point data record format 1"
-@io struct LasPoint1 <: LasPoint
+struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -69,10 +118,11 @@ end align_packed
     user_data::UInt8
     pt_src_id::UInt16
     gps_time::Float64
-end align_packed
+end
+generate_io(LasPoint1)
 
 "ASPRS LAS point data record format 2"
-@io struct LasPoint2 <: LasPoint
+struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -85,10 +135,11 @@ end align_packed
     red::N0f16
     green::N0f16
     blue::N0f16
-end align_packed
+end
+generate_io(LasPoint2)
 
 "ASPRS LAS point data record format 3"
-@io struct LasPoint3 <: LasPoint
+struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -102,7 +153,8 @@ end align_packed
     red::N0f16
     green::N0f16
     blue::N0f16
-end align_packed
+end
+generate_io(LasPoint3)
 
 # for convenience in function signatures
 const LasPointColor = Union{LasPoint2,LasPoint3}
@@ -117,15 +169,6 @@ function Base.show(io::IO, p::LasPoint)
 end
 
 # functions for IO on points
-
-function Base.read(io::IO, ::Type{T}) where T <: LasPoint
-    unpack(io, T)
-end
-
-function Base.write(io::IO, p::T) where T <: LasPoint
-    pack(io, p)
-    nothing
-end
 
 "X coordinate (Float64), apply scale and offset according to the header"
 xcoord(p::LasPoint, h::LasHeader) = muladd(p.x, h.x_scale, h.x_offset)

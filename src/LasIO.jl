@@ -2,6 +2,7 @@ __precompile__()
 
 module LasIO
 
+using Compat
 using FileIO
 using FixedPointNumbers
 using ColorTypes
