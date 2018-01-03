@@ -2,6 +2,7 @@ __precompile__()
 
 module LasIO
 
+using Base.Meta
 using Compat
 using FileIO
 using FixedPointNumbers
@@ -53,6 +54,7 @@ export
 
 include("vlrs.jl")
 include("header.jl")
+include("meta.jl")
 include("point.jl")
 include("util.jl")
 include("fileio.jl")

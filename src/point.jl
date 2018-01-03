@@ -43,57 +43,8 @@ function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T 
     println(io, "Vector{$T} with $n points.")
 end
 
-"Generate read method for structs."
-function generate_read(T::Type)
-    fc = @compat fieldcount(T)
-    types = [fieldtype(T, i) for i = 1:fc]
-
-    # Create unpack function expression
-    function_expression = :(function Base.read(io::IO, t::Type{$T}) end)
-
-    # Create Type call expression and add parameters
-    type_expression = :(($T)())
-    for t in types
-        read_expression = :(read(io, $t))
-        append!(type_expression.args, 0)  # dummy with known length
-        type_expression.args[end] = read_expression
-    end
-
-    # Replace empty function body with Type call
-    function_expression.args[2] = type_expression
-
-    eval(function_expression)
-end
-
-"Generate write method for structs."
-function generate_write(T::Type)
-    # Create unpack function expression
-    function_expression = :(function Base.write(io::IO, T::$T) end)
-
-    body_expression = quote end
-    for t in fieldnames(T)
-        append!(body_expression.args, 0)  # dummy with known length
-        write_expression = :(write(io, T.$t))
-        body_expression.args[end] = write_expression
-    end
-
-    # Return nothing at the end
-    append!(body_expression.args, 0)  # dummy with known length
-    body_expression.args[end] = :(nothing)
-
-    # Replace empty function body with write calls
-    function_expression.args[2] = body_expression
-
-    eval(function_expression)
-end
-
-function generate_io(T::Type)
-    generate_read(T)
-    generate_write(T)
-end
-
 "ASPRS LAS point data record format 0"
-struct LasPoint0 <: LasPoint
+@gen_io struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -104,10 +55,9 @@ struct LasPoint0 <: LasPoint
     user_data::UInt8
     pt_src_id::UInt16
 end
-generate_io(LasPoint0)
 
 "ASPRS LAS point data record format 1"
-struct LasPoint1 <: LasPoint
+@gen_io struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -119,10 +69,9 @@ struct LasPoint1 <: LasPoint
     pt_src_id::UInt16
     gps_time::Float64
 end
-generate_io(LasPoint1)
 
 "ASPRS LAS point data record format 2"
-struct LasPoint2 <: LasPoint
+@gen_io struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -136,10 +85,9 @@ struct LasPoint2 <: LasPoint
     green::N0f16
     blue::N0f16
 end
-generate_io(LasPoint2)
 
 "ASPRS LAS point data record format 3"
-struct LasPoint3 <: LasPoint
+@gen_io struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -154,7 +102,6 @@ struct LasPoint3 <: LasPoint
     green::N0f16
     blue::N0f16
 end
-generate_io(LasPoint3)
 
 # for convenience in function signatures
 const LasPointColor = Union{LasPoint2,LasPoint3}
