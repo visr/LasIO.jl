@@ -15,7 +15,7 @@ struct PointVector{T} <: AbstractArray{T,1}
     function PointVector{T}(data::Vector{UInt8}) where {T}
         pointsize = packed_sizeof(T)
         n = length(data) ÷ pointsize
-        n*pointsize == length(data) || throw(DimensionMismatch("length(data) should be data multiple of $(packed_sizeof(T)), got $(length(data))"))
+        n*pointsize == length(data) || throw(DimensionMismatch("length(data) should be a multiple of $(pointsize), got $(length(data))"))
         new{T}(data, n, pointsize)
     end
 end
@@ -28,14 +28,14 @@ function Base.getindex(pv::PointVector{T}, i::Int) where {T}
     offset = (i-1) * pv.pointsize + 1
     r = offset:offset + pv.pointsize - 1
     io = IOBuffer(pv.data[r])
-    unpack(io, T)
+    read(io, T)
 end
 
-function Base.setindex!(pv::PointVector{T}, val, i::Int) where {T}
+function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
     offset = (i-1) * pv.pointsize + 1
     r = offset:offset + pv.pointsize - 1
     io = IOBuffer(pv.data[r])
-    pack(io, val, T)
+    write(io, val)
 end
 
 function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint

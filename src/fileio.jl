@@ -43,13 +43,13 @@ function load(s::Stream{format"LAS"}; stream=false)
 
     n = header.records_count
     pointtype = pointformat(header)
-    pointdata = Vector{pointtype}(n)
 
     if stream
         pointsize = Int(header.data_record_length)
         pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
         pointdata = PointVector{pointtype}(pointbytes)
     else    
+        pointdata = Vector{pointtype}(n)
         for i=1:n
             pointdata[i] = read(s, pointtype)
         end

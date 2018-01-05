@@ -47,10 +47,8 @@ function generate_io(T::Type)
     generate_write(T)
 end
 
-"""Generate IO expressions macro.
-Taken in part from StructIO."""
+"""Generate IO expressions macro."""
 macro gen_io(typ::Expr)
-    # Get typename, collapsing type expressions until we get the actual type
     T = typ.args[2]
     if isexpr(T, :(<:))
         T = T.args[1]
@@ -59,7 +57,6 @@ macro gen_io(typ::Expr)
         T = T.args[1]
     end
 
-    # Evaluate expression
     ret = Expr(:toplevel, :(Base.@__doc__ $(typ)))
     push!(ret.args, :(generate_io($T)))
     return esc(ret)
