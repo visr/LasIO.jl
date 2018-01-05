@@ -32,7 +32,7 @@ function read_original(io::IO, ::Type{LasPoint0})
 end
 
 function test_orignal()
-    open(filename) do s
+    open(testfile) do s
         LasIO.skiplasf(s)
         header = read(s, LasHeader)
 
@@ -47,7 +47,7 @@ function test_orignal()
 end
 
 function test_new()
-    open(filename) do s
+    open(testfile) do s
         LasIO.skiplasf(s)
         header = read(s, LasHeader)
 
@@ -62,7 +62,7 @@ function test_new()
 end
 
 function test_stream()
-    open(filename) do s
+    open(testfile) do s
         LasIO.skiplasf(s)
         header = read(s, LasHeader)
 
