@@ -2,6 +2,8 @@ using FileIO
 using LasIO
 using Base.Test
 
+include("stream.jl")
+
 workdir = dirname(@__FILE__)
 # source: http://www.liblas.org/samples/
 filename = "libLAS_1.2.las" # point format 0

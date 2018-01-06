@@ -12,10 +12,8 @@ struct PointVector{T} <: AbstractArray{T,1}
     n::Int
     pointsize::Int
 
-    function PointVector{T}(data::Vector{UInt8}) where {T}
-        pointsize = packed_sizeof(T)
+    function PointVector{T}(data::Vector{UInt8}, pointsize::Integer) where {T}
         n = length(data) ÷ pointsize
-        n*pointsize == length(data) || throw(DimensionMismatch("length(data) should be a multiple of $(pointsize), got $(length(data))"))
         new{T}(data, n, pointsize)
     end
 end
@@ -32,10 +30,12 @@ function Base.getindex(pv::PointVector{T}, i::Int) where {T}
 end
 
 function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
-    offset = (i-1) * pv.pointsize + 1
-    r = offset:offset + pv.pointsize - 1
-    io = IOBuffer(pv.data[r])
-    write(io, val)
+    # offset = (i-1) * pv.pointsize + 1
+    # r = offset:offset + pv.pointsize - 1
+    # io = IOBuffer(pv.data, true, true)  # data, readable, writable
+    # seek(io, offset)  # no copy
+    # write(io, val)
+    error("Can't write to read only memory mapped file.")
 end
 
 function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint

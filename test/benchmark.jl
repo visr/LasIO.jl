@@ -83,9 +83,7 @@ end
 
 oh, op = test_orignal()
 nh, np = test_new()
-nh, np = test_new()
 sh, sp = test_stream()
-
 
 println("Original function")
 @btime test_orignal()
@@ -96,4 +94,3 @@ println("New function using streaming")
 
 @show op, np, sp
 @assert op[5] == np[5] == sp[5]
-

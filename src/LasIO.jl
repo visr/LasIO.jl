@@ -8,7 +8,6 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
-using StructIO
 
 export
 

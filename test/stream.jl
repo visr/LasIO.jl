@@ -61,3 +61,9 @@ LasIO.epsg_code!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the act
 save(srsfile_out, srsheader, srspoints)
 @test hash(read(srsfile)) == hash(read(srsfile_out))
 rm(srsfile_out)
+
+# Test editing stream file
+srsfile = joinpath(workdir, "srs.las")
+srsfile_out = joinpath(workdir, "srs-out.las")
+srsheader, srspoints = load(srsfile, stream=true)
+@test_throws ErrorException srspoints[5] = LasPoint1(1,1,1,1,1,1,1,1,1,1.0)
