@@ -8,13 +8,15 @@ Inspiration taken from UnalignedVector.jl
 and extended it with custom indexing and packing.
 """
 struct PointVector{T} <: AbstractArray{T,1}
-    data::Vector{UInt8}
+    io::IOBuffer
     n::Int
     pointsize::Int
 
     function PointVector{T}(data::Vector{UInt8}, pointsize::Integer) where {T}
         n = length(data) ÷ pointsize
-        new{T}(data, n, pointsize)
+
+        # IOBuffer takes (data, readable, writable)
+        new{T}(IOBuffer(data, true, false), n, pointsize)
     end
 end
 
@@ -23,18 +25,15 @@ Base.length(pv::PointVector) = pv.n
 Base.size(pv::PointVector) = (length(pv),)
 
 function Base.getindex(pv::PointVector{T}, i::Int) where {T}
-    offset = (i-1) * pv.pointsize + 1
-    r = offset:offset + pv.pointsize - 1
-    io = IOBuffer(pv.data[r])
-    read(io, T)
+    offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
+    position(pv.io) != offset && seek(pv.io, offset)
+    read(pv.io, T)
 end
 
 function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
-    # offset = (i-1) * pv.pointsize + 1
-    # r = offset:offset + pv.pointsize - 1
-    # io = IOBuffer(pv.data, true, true)  # data, readable, writable
-    # seek(io, offset)  # no copy
-    # write(io, val)
+    # offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
+    # position(pv.io) != offset && seek(pv.io, offset)
+    # write(pv.io, val)
     error("Can't write to read only memory mapped file.")
 end
 

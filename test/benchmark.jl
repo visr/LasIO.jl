@@ -71,7 +71,7 @@ function test_stream()
 
         pointsize = Int(header.data_record_length)
         pointbytes = Mmap.mmap(s, Vector{UInt8}, n*pointsize, position(s))
-        pointdata = PointVector{pointtype}(pointbytes)
+        pointdata = PointVector{pointtype}(pointbytes, pointsize)
 
         for i=1:n
             pointdata[i]
