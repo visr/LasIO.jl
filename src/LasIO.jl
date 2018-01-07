@@ -45,6 +45,9 @@ export
     raw_classification,
     flag_byte,
 
+    # Functions on PointVector
+    sync 
+
     # extended from ColorTypes
     red,
     green,

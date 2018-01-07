@@ -93,4 +93,5 @@ println("New function using streaming")
 @btime test_stream()
 
 @show op, np, sp
-@assert op[5] == np[5] == sp[5]
+@show op[5], np[5], sp[5]
+@assert op[5].x == np[5].x == sp[5].x

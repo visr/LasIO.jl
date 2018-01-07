@@ -64,6 +64,11 @@ rm(srsfile_out)
 
 # Test editing stream file
 srsfile = joinpath(workdir, "srs.las")
-srsfile_out = joinpath(workdir, "srs-out.las")
-srsheader, srspoints = load(srsfile, stream=true)
-@test_throws ErrorException srspoints[5] = LasPoint1(1,1,1,1,1,1,1,1,1,1.0)
+srsheader, srspoints = load(srsfile, stream=true, mutable=true)
+p = srspoints[5]
+p.x = 2
+srspoints[5] = p
+sync(srspoints)  # necessary?
+
+_, points = load(srsfile, stream=false)
+@test points[5].x == 2
