@@ -2,10 +2,12 @@ __precompile__()
 
 module LasIO
 
+using DataStreams
 using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using Parameters
 
 export
     # Types
@@ -19,6 +21,7 @@ export
 
     # Functions on LasHeader
     update!,
+    pointtype,
 
     # Functions on LasPoint
     return_number,
@@ -52,6 +55,7 @@ include("point.jl")
 include("util.jl")
 include("fileio.jl")
 include("srs.jl")
+include("datastreams.jl")
 
 function __init__()
     # these should eventually go in
