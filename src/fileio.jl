@@ -29,7 +29,7 @@ function pointformat(t::Type{T}) where T <: LasPoint
 end
 
 # skip the LAS file's magic four bytes, "LASF"
-skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
+skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = skip(s, sizeof(UInt32))
 
 function load(f::File{format"LAS"})
     open(f) do s

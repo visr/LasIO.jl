@@ -14,8 +14,7 @@ end
 dict_of_struct(T) = Dict((String(fieldname(typeof(T), i)), getfield(T, i)) for i = 1:nfields(T))
 
 function Source(f::AbstractString)
-    # s = is_windows() ? open(f) : IOStream(Mmap.mmap(f))
-    io = open(f)
+    io = is_windows() ? open(f) : IOBuffer(Mmap.mmap(f))
 
     skiplasf(io)
     header = read(io, LasHeader)
@@ -52,8 +51,9 @@ end
 mutable struct Sink{T} <: Data.Sink where T <: LasPoint
     stream::IO
     header::LasHeader
-    # pointdata::Vector{T}
     pointformat::Type{T}
+    bbox::Vector{Float64}
+    returncount::Vector{UInt32}
 end
 
 # setup header and empty pointvector
@@ -77,8 +77,14 @@ function Sink(sch::Data.Schema, S::Type{Data.Field}, append::Bool, fullpath::Abs
     # create empty pointdata
     # pointdata = Vector{pointtype}(n)
 
+    # empty bbox (x, x, y, y, z, z)
+    bbox = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # empty return count
+    return_count = Array{UInt32}([0, 0, 0, 0, 0])
+
     # return stream, position is correct for writing points
-    return Sink(s, header, pointtype)
+    return Sink(s, header, pointtype, bbox, return_count)
 end
 
 # Update existing Sink
@@ -103,17 +109,51 @@ Data.streamtypes(::Type{LasIO.Sink}) = [Data.Field, Data.Row]
 Data.cleanup!(sink::LasIO.Sink) = nothing
 Data.weakrefstrings(::Type{LasIO.Sink}) = false
 
+function update_sink(sink::LasIO.Sink, col::Integer, val::T) where {T}
+    if col == 1
+        (val > sink.bbox[1] || sink.bbox[1] == 0.0) && (setindex!(sink.bbox, val, 1))  # xmax
+        (val < sink.bbox[2] || sink.bbox[2] == 0.0) && (setindex!(sink.bbox, val, 2))  # xmin
+    end
+    if col == 2
+        (val > sink.bbox[3] || sink.bbox[3] == 0.0) && (setindex!(sink.bbox, val, 3))  # ymax
+        (val < sink.bbox[4] || sink.bbox[4] == 0.0) && (setindex!(sink.bbox, val, 4))  # ymin
+    end
+    if col == 3
+        (val > sink.bbox[5] || sink.bbox[5] == 0.0) && (setindex!(sink.bbox, val, 5))  # zmax
+        (val < sink.bbox[6] || sink.bbox[6] == 0.0) && (setindex!(sink.bbox, val, 6))  # zmin  
+    end
+    if col == 5
+        return_number = val & 0b00000111
+        return_number <= 5 && (sink.returncount[return_number+1] += 1)
+    end
+end
+
 # actually write points to our pointvector
 function Data.streamto!(sink::LasIO.Sink, S::Type{Data.Field}, val, row, col)
     # TODO(evetion) check if stream position is at row*col
-    # write points
+    update_sink(sink, col, val)
     write(sink.stream, val)
 end
 
 # save file
 function Data.close!(sink::LasIO.Sink)
+
+    # update header
+    # only works when Int32 are passed, already scaled and offset
+    header = sink.header
+    header.x_max = muladd(sink.bbox[1], header.x_scale, header.x_offset)
+    header.x_min = muladd(sink.bbox[2], header.x_scale, header.x_offset)
+    header.y_max = muladd(sink.bbox[3], header.y_scale, header.y_offset)
+    header.y_min = muladd(sink.bbox[4], header.y_scale, header.y_offset)
+    header.z_max = muladd(sink.bbox[5], header.z_scale, header.z_offset)
+    header.z_min = muladd(sink.bbox[6], header.z_scale, header.z_offset)
+    header.point_return_count = sink.returncount
+
+    # seek back to beginning and write header
+    seekstart(sink.stream)
+    skiplasf(sink.stream)
+    write(sink.stream, header)
+
     close(sink.stream)
-    # TODO(evetion) check number of points, extents etc
-    # change header if possible
     return sink
 end
