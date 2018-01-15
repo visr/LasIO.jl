@@ -2,6 +2,8 @@
 # SOURCE
 ########
 
+const minimum_coordinate = typemin(Int32)
+const maximum_coordinate = typemax(Int32)
 
 mutable struct Source <: Data.Source
     schema::Data.Schema
@@ -14,6 +16,8 @@ end
 dict_of_struct(T) = Dict((String(fieldname(typeof(T), i)), getfield(T, i)) for i = 1:nfields(T))
 
 function Source(f::AbstractString)
+    !isfile(f) && error("Please provide valid path.")
+
     io = is_windows() ? open(f) : IOBuffer(Mmap.mmap(f))
 
     skiplasf(io)
@@ -25,6 +29,7 @@ function Source(f::AbstractString)
     # Schema
     columns = Vector{String}(fieldnames(pointtype))
     types = Vector{Type}([fieldtype(pointtype, i) for i in 1:nfields(pointtype)])
+    types[1:3] = [Float64, Float64, Float64]  # Convert XYZ coordinates
     sch = Data.Schema(types, columns, n, dict_of_struct(header))
 
     return Source(sch, header, io, f, position(io))
@@ -39,9 +44,19 @@ Data.streamtype(::Type{<:LasIO.Source}, ::Type{Data.Field}) = true
 
 # Data.streamfrom(source::LasIO.Source, st::Type{Data.Row}, t::Type{T}, row::Int) where {T} = read(source.io, pointformat(source.header))
 function Data.streamfrom(source::LasIO.Source, ::Type{Data.Field}, ::Type{T}, row::Int, col::Int) where {T}
-    # p = source.pointdata[row]
-    # v = getfield(p, fieldname(typeof(p), col))
-    read(source.io, T)
+
+    # XYZ => scale stored Integers to Floats using header information
+    if col == 1
+        return muladd(read(source.io, Int32), source.header.x_scale, source.header.x_offset)
+    elseif col == 2
+        return muladd(read(source.io, Int32), source.header.y_scale, source.header.y_offset)
+    elseif col == 3
+        return muladd(read(source.io, Int32), source.header.z_scale, source.header.z_offset)
+
+    # Otherwise return read value
+    else
+        v = read(source.io, T)
+    end
 end
 
 ######
@@ -57,7 +72,11 @@ mutable struct Sink{T} <: Data.Sink where T <: LasPoint
 end
 
 # setup header and empty pointvector
-function Sink(sch::Data.Schema, S::Type{Data.Field}, append::Bool, fullpath::AbstractString)
+function Sink(sch::Data.Schema, S::Type{Data.Field}, append::Bool, fullpath::AbstractString, bbox::Vector{Float64}; scale::Real=0.01, epsg=nothing)
+
+    # validate input
+    length(bbox) != 6 && error("Provide bounding box as (xmin, ymin, zmin, xmax, ymax, zmax)")
+
     s = open(fullpath, "w")
 
     # determine point version and derivatives
@@ -66,19 +85,21 @@ function Sink(sch::Data.Schema, S::Type{Data.Field}, append::Bool, fullpath::Abs
     data_record_length = packed_size(pointtype)
     n = Data.size(sch, 1)  # rows
 
-    # create header 
-    header = LasHeader(data_format_id=data_format_id, data_record_length=data_record_length, records_count=n)
+    # setup and validate scaling based on bbox and scale
+    x_offset = determine_offset(bbox[1], bbox[4], scale)
+    y_offset = determine_offset(bbox[2], bbox[5], scale)
+    z_offset = determine_offset(bbox[3], bbox[6], scale)
+
+    # create header
+    header = LasHeader(data_format_id=data_format_id, data_record_length=data_record_length, records_count=n,
+        x_max=bbox[4], x_min=bbox[1], y_max=bbox[5], y_min=bbox[2], z_max=bbox[6], z_min=bbox[3],
+        x_scale=scale, y_scale=scale, z_scale=scale,
+        x_offset=x_offset, y_offset=y_offset, z_offset=z_offset)
+    epsg != nothing && epsg_code!(header, epsg)
 
     # write header
     write(s, magic(format"LAS"))
     write(s, header)
-    println("Stream now at $(position(s))")
-
-    # create empty pointdata
-    # pointdata = Vector{pointtype}(n)
-
-    # empty bbox (x, x, y, y, z, z)
-    bbox = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     # empty return count
     return_count = Array{UInt32}([0, 0, 0, 0, 0])
@@ -124,7 +145,7 @@ function update_sink(sink::LasIO.Sink, col::Integer, val::T) where {T}
     end
     if col == 5
         return_number = val & 0b00000111
-        return_number <= 5 && (sink.returncount[return_number+1] += 1)
+        return_number < 5 && (sink.returncount[return_number+1] += 1)
     end
 end
 
@@ -132,21 +153,30 @@ end
 function Data.streamto!(sink::LasIO.Sink, S::Type{Data.Field}, val, row, col)
     # TODO(evetion) check if stream position is at row*col
     update_sink(sink, col, val)
-    write(sink.stream, val)
+
+    # XYZ => scale given Floats to Integers using header information
+    if col == 1
+        write(sink.stream, round(Int32, ((val - sink.header.x_offset) / sink.header.x_scale)))
+    elseif col == 2
+        write(sink.stream, round(Int32, ((val - sink.header.y_offset) / sink.header.y_scale)))
+    elseif col == 3
+        write(sink.stream, round(Int32, ((val - sink.header.z_offset) / sink.header.z_scale)))
+    else
+        write(sink.stream, val)
+    end
 end
 
 # save file
 function Data.close!(sink::LasIO.Sink)
 
     # update header
-    # only works when Int32 are passed, already scaled and offset
     header = sink.header
-    header.x_max = muladd(sink.bbox[1], header.x_scale, header.x_offset)
-    header.x_min = muladd(sink.bbox[2], header.x_scale, header.x_offset)
-    header.y_max = muladd(sink.bbox[3], header.y_scale, header.y_offset)
-    header.y_min = muladd(sink.bbox[4], header.y_scale, header.y_offset)
-    header.z_max = muladd(sink.bbox[5], header.z_scale, header.z_offset)
-    header.z_min = muladd(sink.bbox[6], header.z_scale, header.z_offset)
+    header.x_max = sink.bbox[1]
+    header.x_min = sink.bbox[2]
+    header.y_max = sink.bbox[3]
+    header.y_min = sink.bbox[4]
+    header.z_max = sink.bbox[5]
+    header.z_min = sink.bbox[6]
     header.point_return_count = sink.returncount
 
     # seek back to beginning and write header
