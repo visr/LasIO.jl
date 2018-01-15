@@ -8,64 +8,68 @@ function Base.show(io::IO, pointdata::Vector{T}) where T <: LasPoint
 end
 
 "ASPRS LAS point data record format 0"
-struct LasPoint0 <: LasPoint
+@with_kw struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
-    intensity::UInt16
-    flag_byte::UInt8
-    raw_classification::UInt8
-    scan_angle::Int8
-    user_data::UInt8
-    pt_src_id::UInt16
+    intensity::UInt16 = UInt16(0)
+    flag_byte::UInt8 = 0x0
+    raw_classification::UInt8 = 0x0
+    scan_angle::Int8 = Int8(0)
+    user_data::UInt8 = 0x0
+    pt_src_id::UInt16 = UInt16(0)
 end
+packed_size(::Type{LasPoint0}) = 20
 
 "ASPRS LAS point data record format 1"
-struct LasPoint1 <: LasPoint
+@with_kw struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
-    intensity::UInt16
-    flag_byte::UInt8
-    raw_classification::UInt8
-    scan_angle::Int8
-    user_data::UInt8
-    pt_src_id::UInt16
-    gps_time::Float64
+    intensity::UInt16 = UInt16(0)
+    flag_byte::UInt8 = 0x0
+    raw_classification::UInt8 = 0x0
+    scan_angle::Int8 = Int8(0)
+    user_data::UInt8 = 0x0
+    pt_src_id::UInt16 = UInt16(0)
+    gps_time::Float64 = gps_time(now())
 end
+packed_size(::Type{LasPoint1}) = 28
 
 "ASPRS LAS point data record format 2"
-struct LasPoint2 <: LasPoint
+@with_kw struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
-    intensity::UInt16
-    flag_byte::UInt8
-    raw_classification::UInt8
-    scan_angle::Int8
-    user_data::UInt8
-    pt_src_id::UInt16
-    red::N0f16
-    green::N0f16
-    blue::N0f16
+    intensity::UInt16 = UInt16(0)
+    flag_byte::UInt8 = 0x0
+    raw_classification::UInt8 = 0x0
+    scan_angle::Int8 = Int8(0)
+    user_data::UInt8 = 0x0
+    pt_src_id::UInt16 = UInt16(0)
+    red::N0f16 = N0f16(0)
+    green::N0f16 = N0f16(0)
+    blue::N0f16 = N0f16(0)
 end
+packed_size(::Type{LasPoint2}) = 26
 
 "ASPRS LAS point data record format 3"
-struct LasPoint3 <: LasPoint
+@with_kw struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
-    intensity::UInt16
-    flag_byte::UInt8
-    raw_classification::UInt8
-    scan_angle::Int8
-    user_data::UInt8
-    pt_src_id::UInt16
-    gps_time::Float64
-    red::N0f16
-    green::N0f16
-    blue::N0f16
+    intensity::UInt16 = UInt16(0)
+    flag_byte::UInt8 = 0x0
+    raw_classification::UInt8 = 0x0
+    scan_angle::Int8 = Int8(0)
+    user_data::UInt8 = 0x0
+    pt_src_id::UInt16 = UInt16(0)
+    gps_time::Float64 = gps_time(now())
+    red::N0f16 = N0f16(0)
+    green::N0f16 = N0f16(0)
+    blue::N0f16 = N0f16(0)
 end
+packed_size(::Type{LasPoint3}) = 34
 
 # for convenience in function signatures
 const LasPointColor = Union{LasPoint2,LasPoint3}

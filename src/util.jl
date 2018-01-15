@@ -32,3 +32,9 @@ function update!(h::LasHeader, pvec::Vector{T}) where T <: LasPoint
     h.records_count = length(pvec)
     nothing
 end
+
+"""Determine offset as implemented by LasTools."""
+function determine_offset(min_value::Real, max_value::Real, scale::Real; threshold::Integer=10^7)
+    s = round(Integer, (min_value + max_value)/scale/2*threshold)  # if value rounds to 0, no offset
+    s * threshold * scale
+end

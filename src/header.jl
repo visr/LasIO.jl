@@ -14,40 +14,40 @@ Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only le
 content
 =#
 
-mutable struct LasHeader
-    file_source_id::UInt16
-    global_encoding::UInt16
-    guid_1::UInt32
-    guid_2::UInt16
-    guid_3::UInt16
-    guid_4::AbstractString
-    version_major::UInt8
-    version_minor::UInt8
-    system_id::AbstractString
-    software_id::AbstractString
-    creation_doy::UInt16
-    creation_year::UInt16
-    header_size::UInt16
-    data_offset::UInt32
-    n_vlr::UInt32
-    data_format_id::UInt8
-    data_record_length::UInt16
-    records_count::UInt32
-    point_return_count::Vector{UInt32}
-    x_scale::Float64
-    y_scale::Float64
-    z_scale::Float64
-    x_offset::Float64
-    y_offset::Float64
-    z_offset::Float64
-    x_max::Float64
-    x_min::Float64
-    y_max::Float64
-    y_min::Float64
-    z_max::Float64
-    z_min::Float64
-    variable_length_records::Vector{LasVariableLengthRecord}
-    user_defined_bytes::Vector{UInt8}
+@with_kw mutable struct LasHeader
+    file_source_id::UInt16 = UInt16(0)  # no known flightline
+    global_encoding::UInt16 = UInt16(0)
+    guid_1::UInt32 = UInt32(0)  # project IDs
+    guid_2::UInt16 = UInt16(0)
+    guid_3::UInt16 = UInt16(0)
+    guid_4::AbstractString = rpad("", 8)
+    version_major::UInt8 = UInt8(1)
+    version_minor::UInt8 = UInt8(0)
+    system_id::AbstractString = rpad("LasIO.jl datastream", 32)  # small char array would be nicer
+    software_id::AbstractString = rpad("LasIO.jl", 32)
+    creation_doy::UInt16 = UInt16(Dates.dayofyear(now()))
+    creation_year::UInt16 = UInt16(Dates.year(now()))
+    header_size::UInt16 = UInt16(227)
+    data_offset::UInt32 = UInt32(227)
+    n_vlr::UInt32 = UInt32(0)
+    data_format_id::UInt8 = UInt8(pointformat(LasPoint0))
+    data_record_length::UInt16 = UInt16(packed_size(LasPoint0))
+    records_count::UInt32 = UInt32(0)
+    point_return_count::Vector{UInt32} = Vector{UInt32}([0,0,0,0,0])
+    x_scale::Float64 = 0.01
+    y_scale::Float64 = 0.01
+    z_scale::Float64 = 0.01
+    x_offset::Float64 = 0.0
+    y_offset::Float64 = 0.0
+    z_offset::Float64 = 0.0
+    x_max::Float64 = 0.0
+    x_min::Float64 = 0.0
+    y_max::Float64 = 0.0
+    y_min::Float64 = 0.0
+    z_max::Float64 = 0.0
+    z_min::Float64 = 0.0
+    variable_length_records::Vector{LasVariableLengthRecord} = Vector{LasVariableLengthRecord}()
+    user_defined_bytes::Vector{UInt8} = Vector{UInt8}()
 end
 
 function Base.show(io::IO, header::LasHeader)

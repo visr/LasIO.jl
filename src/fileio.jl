@@ -14,8 +14,22 @@ function pointformat(header::LasHeader)
     end
 end
 
+function pointformat(t::Type{T}) where T <: LasPoint
+    if t == LasPoint0
+        return 0x00
+    elseif t == LasPoint1
+        return 0x01
+    elseif t == LasPoint2
+        return 0x02
+    elseif t == LasPoint3
+        return 0x03
+    else
+        error("unsupported point format $t")
+    end
+end
+
 # skip the LAS file's magic four bytes, "LASF"
-skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
+skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = skip(s, sizeof(UInt32))
 
 function load(f::File{format"LAS"})
     open(f) do s
@@ -45,8 +59,7 @@ end
 
 function read_header(f::AbstractString)
     open(f) do s
-        skiplasf(s)
-        read(s, LasHeader)
+        read_header(s::IO)
     end
 end
 
