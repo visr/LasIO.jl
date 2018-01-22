@@ -114,6 +114,9 @@ function Base.show(io::IO, p::LasPoint)
     println(io, "LasPoint(x=$x, y=$y, z=$z, classification=$cl)")
 end
 
+# Extend base by enabling reading relevant FixedPointNumbers from IO.
+Base.read(io::IO, ::Type{N0f16}) = reinterpret(N0f16, read(io, UInt16))
+
 # functions for IO on points
 
 "X coordinate (Float64), apply scale and offset according to the header"
