@@ -37,9 +37,9 @@ function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
     error("Can't write to read only memory mapped file.")
 end
 
-function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
+function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
     n = size(pointdata, 1)
-    println(io, "Vector{$T} with $n points.")
+    println(io, "$(typeof(pointdata)) with $n points.")
 end
 
 "ASPRS LAS point data record format 0"
