@@ -2,12 +2,15 @@ __precompile__()
 
 module LasIO
 
+using Base.Meta
+using Compat
 using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
 
 export
+
     # Types
     LasHeader,
     LasVariableLengthRecord,
@@ -16,9 +19,11 @@ export
     LasPoint1,
     LasPoint2,
     LasPoint3,
+    PointVector,
 
     # Functions on LasHeader
     update!,
+    pointformat,
 
     # Functions on LasPoint
     return_number,
@@ -48,6 +53,7 @@ export
 
 include("vlrs.jl")
 include("header.jl")
+include("meta.jl")
 include("point.jl")
 include("util.jl")
 include("fileio.jl")

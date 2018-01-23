@@ -2,13 +2,48 @@
 "Abstract type for ASPRS LAS point data record formats 0 - 3"
 abstract type LasPoint end
 
-function Base.show(io::IO, pointdata::Vector{T}) where T <: LasPoint
+"""
+Custom PointVector struct for memory mapped LasPoints.
+Inspiration taken from UnalignedVector.jl
+and extended it with custom indexing and packing.
+"""
+struct PointVector{T} <: AbstractArray{T,1}
+    io::IOBuffer
+    n::Int
+    pointsize::Int
+
+    function PointVector{T}(data::Vector{UInt8}, pointsize::Integer) where {T}
+        n = length(data) ÷ pointsize
+
+        # IOBuffer takes (data, readable, writable)
+        new{T}(IOBuffer(data, true, false), n, pointsize)
+    end
+end
+
+Base.IndexStyle(::Type{PointVector{T}}) where {T} = IndexLinear()
+Base.length(pv::PointVector) = pv.n
+Base.size(pv::PointVector) = (length(pv),)
+
+function Base.getindex(pv::PointVector{T}, i::Int) where {T}
+    offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
+    position(pv.io) != offset && seek(pv.io, offset)
+    read(pv.io, T)
+end
+
+function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
+    # offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
+    # position(pv.io) != offset && seek(pv.io, offset)
+    # write(pv.io, val)
+    error("Can't write to read only memory mapped file.")
+end
+
+function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
     n = size(pointdata, 1)
-    println(io, "Vector{$T} with $n points.")
+    println(io, "$(typeof(pointdata)) with $n points.")
 end
 
 "ASPRS LAS point data record format 0"
-struct LasPoint0 <: LasPoint
+@gen_io struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -21,7 +56,7 @@ struct LasPoint0 <: LasPoint
 end
 
 "ASPRS LAS point data record format 1"
-struct LasPoint1 <: LasPoint
+@gen_io struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -35,7 +70,7 @@ struct LasPoint1 <: LasPoint
 end
 
 "ASPRS LAS point data record format 2"
-struct LasPoint2 <: LasPoint
+@gen_io struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -51,7 +86,7 @@ struct LasPoint2 <: LasPoint
 end
 
 "ASPRS LAS point data record format 3"
-struct LasPoint3 <: LasPoint
+@gen_io struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -72,11 +107,18 @@ const LasPointColor = Union{LasPoint2,LasPoint3}
 const LasPointTime = Union{LasPoint1,LasPoint3}
 
 function Base.show(io::IO, p::LasPoint)
+    x = Int(p.x)
+    y = Int(p.y)
     z = Int(p.z)
     cl = Int(classification(p))
-    println(io, "LasPoint(z=$z, classification=$cl)")
+    println(io, "LasPoint(x=$x, y=$y, z=$z, classification=$cl)")
 end
 
+# Extend base by enabling reading/writing relevant FixedPointNumbers from IO.
+Base.read(io::IO, ::Type{N0f16}) = reinterpret(N0f16, read(io, UInt16))
+Base.write(io::IO, t::N0f16) = write(io, reinterpret(UInt16, t))
+
+# functions for IO on points
 
 "X coordinate (Float64), apply scale and offset according to the header"
 xcoord(p::LasPoint, h::LasHeader) = muladd(p.x, h.x_scale, h.x_offset)
@@ -92,181 +134,6 @@ xcoord(x::Real, h::LasHeader) = round(Int32, (x - h.x_offset) / h.x_scale)
 ycoord(y::Real, h::LasHeader) = round(Int32, (y - h.y_offset) / h.y_scale)
 "Z value (Int32), as represented in the point data, reversing the offset and scale from the header"
 zcoord(z::Real, h::LasHeader) = round(Int32, (z - h.z_offset) / h.z_scale)
-
-# functions for reading the points from a stream
-
-function Base.read(io::IO, ::Type{LasPoint0})
-    x = read(io, Int32)
-    y = read(io, Int32)
-    z = read(io, Int32)
-    intensity = read(io, UInt16)
-    flag_byte = read(io, UInt8)
-    raw_classification = read(io, UInt8)
-    scan_angle = read(io, Int8)
-    user_data = read(io, UInt8)
-    pt_src_id = read(io, UInt16)
-    LasPoint0(
-        x,
-        y,
-        z,
-        intensity,
-        flag_byte,
-        raw_classification,
-        scan_angle,
-        user_data,
-        pt_src_id
-    )
-end
-
-function Base.read(io::IO, ::Type{LasPoint1})
-    x = read(io, Int32)
-    y = read(io, Int32)
-    z = read(io, Int32)
-    intensity = read(io, UInt16)
-    flag_byte = read(io, UInt8)
-    raw_classification = read(io, UInt8)
-    scan_angle = read(io, Int8)
-    user_data = read(io, UInt8)
-    pt_src_id = read(io, UInt16)
-    gps_time = read(io, Float64)
-    LasPoint1(
-        x,
-        y,
-        z,
-        intensity,
-        flag_byte,
-        raw_classification,
-        scan_angle,
-        user_data,
-        pt_src_id,
-        gps_time
-    )
-end
-
-
-function Base.read(io::IO, ::Type{LasPoint2})
-    x = read(io, Int32)
-    y = read(io, Int32)
-    z = read(io, Int32)
-    intensity = read(io, UInt16)
-    flag_byte = read(io, UInt8)
-    raw_classification = read(io, UInt8)
-    scan_angle = read(io, Int8)
-    user_data = read(io, UInt8)
-    pt_src_id = read(io, UInt16)
-    red = reinterpret(N0f16, read(io, UInt16))
-    green = reinterpret(N0f16, read(io, UInt16))
-    blue = reinterpret(N0f16, read(io, UInt16))
-    LasPoint2(
-        x,
-        y,
-        z,
-        intensity,
-        flag_byte,
-        raw_classification,
-        scan_angle,
-        user_data,
-        pt_src_id,
-        red,
-        green,
-        blue
-    )
-end
-
-
-function Base.read(io::IO, ::Type{LasPoint3})
-    x = read(io, Int32)
-    y = read(io, Int32)
-    z = read(io, Int32)
-    intensity = read(io, UInt16)
-    flag_byte = read(io, UInt8)
-    raw_classification = read(io, UInt8)
-    scan_angle = read(io, Int8)
-    user_data = read(io, UInt8)
-    pt_src_id = read(io, UInt16)
-    gps_time = read(io, Float64)
-    red = reinterpret(N0f16, read(io, UInt16))
-    green = reinterpret(N0f16, read(io, UInt16))
-    blue = reinterpret(N0f16, read(io, UInt16))
-    LasPoint3(
-        x,
-        y,
-        z,
-        intensity,
-        flag_byte,
-        raw_classification,
-        scan_angle,
-        user_data,
-        pt_src_id,
-        gps_time,
-        red,
-        green,
-        blue
-    )
-end
-
-
-# functions for writing the points to a stream
-
-function Base.write(io::IO, p::LasPoint0)
-    write(io, p.x)
-    write(io, p.y)
-    write(io, p.z)
-    write(io, p.intensity)
-    write(io, p.flag_byte)
-    write(io, p.raw_classification)
-    write(io, p.scan_angle)
-    write(io, p.user_data)
-    write(io, p.pt_src_id)
-    nothing
-end
-
-function Base.write(io::IO, p::LasPoint1)
-    write(io, p.x)
-    write(io, p.y)
-    write(io, p.z)
-    write(io, p.intensity)
-    write(io, p.flag_byte)
-    write(io, p.raw_classification)
-    write(io, p.scan_angle)
-    write(io, p.user_data)
-    write(io, p.pt_src_id)
-    write(io, p.gps_time)
-    nothing
-end
-
-function Base.write(io::IO, p::LasPoint2)
-    write(io, p.x)
-    write(io, p.y)
-    write(io, p.z)
-    write(io, p.intensity)
-    write(io, p.flag_byte)
-    write(io, p.raw_classification)
-    write(io, p.scan_angle)
-    write(io, p.user_data)
-    write(io, p.pt_src_id)
-    write(io, reinterpret(UInt16, p.red))
-    write(io, reinterpret(UInt16, p.green))
-    write(io, reinterpret(UInt16, p.blue))
-    nothing
-end
-
-function Base.write(io::IO, p::LasPoint3)
-    write(io, p.x)
-    write(io, p.y)
-    write(io, p.z)
-    write(io, p.intensity)
-    write(io, p.flag_byte)
-    write(io, p.raw_classification)
-    write(io, p.scan_angle)
-    write(io, p.user_data)
-    write(io, p.pt_src_id)
-    write(io, p.gps_time)
-    write(io, reinterpret(UInt16, p.red))
-    write(io, reinterpret(UInt16, p.green))
-    write(io, reinterpret(UInt16, p.blue))
-    nothing
-end
 
 # functions to access common LasPoint fields
 "Integer representation of the pulse return magnitude."

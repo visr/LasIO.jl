@@ -17,13 +17,14 @@ end
 # skip the LAS file's magic four bytes, "LASF"
 skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
 
-function load(f::File{format"LAS"})
+function load(f::File{format"LAS"}; mmap=false)
     open(f) do s
-        load(s)
+        load(s; mmap=mmap)
     end
 end
 
-function load(s::Union{Stream{format"LAS"}, Pipe})
+# Load pipe separately since it can't be memory mapped
+function load(s::Pipe)
     skiplasf(s)
     header = read(s, LasHeader)
 
@@ -33,6 +34,27 @@ function load(s::Union{Stream{format"LAS"}, Pipe})
     for i=1:n
         pointdata[i] = read(s, pointtype)
     end
+    header, pointdata
+end
+
+function load(s::Stream{format"LAS"}; mmap=false)
+    skiplasf(s)
+    header = read(s, LasHeader)
+
+    n = header.records_count
+    pointtype = pointformat(header)
+
+    if mmap
+        pointsize = Int(header.data_record_length)
+        pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
+        pointdata = PointVector{pointtype}(pointbytes, pointsize)
+    else
+        pointdata = Vector{pointtype}(n)
+        for i=1:n
+            pointdata[i] = read(s, pointtype)
+        end
+    end
+
     header, pointdata
 end
 
@@ -55,13 +77,13 @@ function read_header(s::IO)
     read(s, LasHeader)
 end
 
-function save(f::File{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(f::File{format"LAS"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     open(f, "w") do s
         save(s, header, pointdata)
     end
 end
 
-function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
     header_n = header.records_count
     n = length(pointdata)
@@ -78,7 +100,7 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::Vector{T}) w
     end
 end
 
-function save(f::File{format"LAZ"}, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function save(f::File{format"LAZ"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # pipes las to laszip to write laz
     open(`laszip -olaz -stdin -o $(filename(f))`, "w") do s
         savebuf(s, header, pointdata)
@@ -88,7 +110,7 @@ end
 # Uses a buffered write to the stream.
 # For saving to LAS this does not increase speed,
 # but it speeds up a lot when the result is piped to laszip.
-function savebuf(s::IO, header::LasHeader, pointdata::Vector{T}) where T <: LasPoint
+function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
     header_n = header.records_count
     n = length(pointdata)
