@@ -7,8 +7,7 @@ Custom PointVector struct for memory mapped LasPoints.
 Inspiration taken from UnalignedVector.jl
 and extended it with custom indexing and packing.
 """
-struct PointVector{T <: LasPoint} <: AbstractArray{T,1}
-    data::Vector{UInt8}
+struct PointVector{T} <: AbstractArray{T,1}
     io::IOBuffer
     n::Int
     pointsize::Int
@@ -49,9 +48,9 @@ function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where T <: LasPoint
     flush(pv.io)
 end
 
-function Base.show(io::IO, pointdata::Union{PointVector{T}, Vector{T}}) where T <: LasPoint
+function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
     n = size(pointdata, 1)
-    println(io, "Vector{$T} with $n points.")
+    println(io, "$(typeof(pointdata)) with $n points.")
 end
 
 "ASPRS LAS point data record format 0"
