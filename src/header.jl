@@ -63,7 +63,10 @@ mutable struct LasHeader
     records_count_new::UInt64
     point_return_count_new::Vector{UInt64}  # 15
 
+    # VLRs
     variable_length_records::Vector{LasVariableLengthRecord}
+
+    # Header can have extra bits
     user_defined_bytes::Vector{UInt8}
 end
 
@@ -75,7 +78,7 @@ end
 function Base.showall(io::IO, h::LasHeader)
     show(io, h)
     for name in fieldnames(h)
-        if name == :variable_length_records
+        if (name == :variable_length_records) || (name == :extended_variable_length_records)
             println(io, string("\tvariable_length_records = "))
             for vlr in h.variable_length_records
                 println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(vlr.record_length_after_header) bytes...)")

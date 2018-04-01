@@ -64,7 +64,7 @@ function Base.read(io::IO, ::Type{ExtendedLasVariableLengthRecord})
     println(record_id)
     println(description)
     data = read_vlr_data(io, record_id, record_data_length)
-    LasVariableLengthRecord(
+    ExtendedLasVariableLengthRecord(
         reserved,
         user_id,
         record_id,

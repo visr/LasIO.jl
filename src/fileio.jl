@@ -54,7 +54,7 @@ function load(s::Stream{format"LAS"}; mmap=false)
     println(header)
     lv = VersionNumber(header.version_major, header.version_minor)
 
-    n = lv >= v"1.4" ? header.records_count_new : header.records_count
+    n = header.records_count_new
     println("# points $n")
     pointtype = pointformat(header)
     println("type $pointtype")
@@ -70,7 +70,22 @@ function load(s::Stream{format"LAS"}; mmap=false)
         end
     end
 
-    header, pointdata
+    # Extended Variable Length Records
+    evlrs = Vector{ExtendedLasVariableLengthRecord}()
+    println("Current pos: $(position(s))")
+    if lv == v"1.3" && header.waveform_offset > 0
+        println(header.waveform_offset)
+        push!(evlrs, read(s, ExtendedLasVariableLengthRecord))
+    elseif lv == v"1.4" && header.n_evlr > 0
+        prinlnt(header.evlr_offset)
+        for i=1:header.n_evlr
+            push!(evlrs, read(s, ExtendedLasVariableLengthRecord))
+        end
+    else
+        nothing
+    end
+
+    header, pointdata, evlrs
 end
 
 function load(f::File{format"LAZ"})
