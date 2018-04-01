@@ -102,6 +102,177 @@ end
     blue::N0f16
 end
 
+# Added in ASPRS LAS 1.3
+""""ASPRS LAS point data record format 4
+which adds waveform packets to format 1."""
+@gen_io mutable struct LasPoint4 <: LasPoint
+    # Format 1
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    flag_byte::UInt8
+    raw_classification::UInt8
+    scan_angle::Int8
+    user_data::UInt8
+    pt_src_id::UInt16
+    gps_time::Float64
+    # Format 4
+    wave_packet_descriptor_index::UInt8
+    waveform_data_offset::UInt64
+    waveform_packet_size::UInt32
+    waveform_return_point_location::Float32  # ps
+    xt::Float32
+    yt::Float32
+    zt::Float32
+end
+
+
+"""ASPRS LAS point data record format 5
+which adds waveform packets to format 3."""
+@gen_io mutable struct LasPoint5 <: LasPoint
+    # Format 3
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    flag_byte::UInt8
+    raw_classification::UInt8
+    scan_angle::Int8
+    user_data::UInt8
+    pt_src_id::UInt16
+    gps_time::Float64
+    red::N0f16
+    green::N0f16
+    blue::N0f16
+    # Format 5
+    wave_packet_descriptor_index::UInt8
+    waveform_data_offset::UInt64
+    waveform_packet_size::UInt32
+    waveform_return_point_location::Float32  # ps
+    xt::Float32
+    yt::Float32
+    zt::Float32
+end
+
+# Added in ASPRS LAS 1.4
+""""ASPRS LAS point data record format 6
+which serves as a core 30 bytes for formats 6-10."""
+@gen_io mutable struct LasPoint6 <: LasPoint
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    return_byte::UInt8  # return number, # of returns
+    classification_byte::UInt8  # class flags, scanner channel, scan direction, edge of flightline
+    raw_classification::UInt8
+    user_data::UInt8
+    scan_angle::Int16
+    pt_src_id::UInt16
+    gps_time::Float64
+end
+
+""""ASPRS LAS point data record format 7
+which adds RGB to format 6."""
+@gen_io mutable struct LasPoint7 <: LasPoint
+    # Format 6
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    return_byte::UInt8  # return number, # of returns
+    classification_byte::UInt8  # class flags, scanner channel, scan direction, edge of flightline
+    raw_classification::UInt8
+    user_data::UInt8
+    scan_angle::Int16
+    pt_src_id::UInt16
+    gps_time::Float64
+    # Format 7
+    red::N0f16
+    green::N0f16
+    blue::N0f16
+end
+
+""""ASPRS LAS point data record format 8
+which adds NIR to format 7."""
+@gen_io mutable struct LasPoint8 <: LasPoint
+    # Format 6
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    return_byte::UInt8  # return number, # of returns
+    classification_byte::UInt8  # class flags, scanner channel, scan direction, edge of flightline
+    raw_classification::UInt8
+    user_data::UInt8
+    scan_angle::Int16
+    pt_src_id::UInt16
+    gps_time::Float64
+    # Format 7
+    red::N0f16
+    green::N0f16
+    blue::N0f16
+    # Format 8
+    nir::N0f16
+end
+
+""""ASPRS LAS point data record format 9
+which adds wave packets to format 6."""
+@gen_io mutable struct LasPoint9 <: LasPoint
+    # Format 6
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    return_byte::UInt8  # return number, # of returns
+    classification_byte::UInt8  # class flags, scanner channel, scan direction, edge of flightline
+    raw_classification::UInt8
+    user_data::UInt8
+    scan_angle::Int16
+    pt_src_id::UInt16
+    gps_time::Float64
+    # Format 9
+    wave_packet_descriptor_index::UInt8
+    waveform_data_offset::UInt64
+    waveform_packet_size::UInt32
+    waveform_return_point_location::Float32  # ps
+    xt::Float32
+    yt::Float32
+    zt::Float32
+end
+
+
+""""ASPRS LAS point data record format 10
+which adds wave packets to format 8."""
+@gen_io mutable struct LasPoint10 <: LasPoint
+    # Format 6
+    x::Int32
+    y::Int32
+    z::Int32
+    intensity::UInt16
+    return_byte::UInt8  # return number, # of returns
+    classification_byte::UInt8  # class flags, scanner channel, scan direction, edge of flightline
+    raw_classification::UInt8
+    user_data::UInt8
+    scan_angle::Int16
+    pt_src_id::UInt16
+    gps_time::Float64
+    # Format 7
+    red::N0f16
+    green::N0f16
+    blue::N0f16
+    # Format 8
+    nir::N0f16
+    # Format 10
+    wave_packet_descriptor_index::UInt8
+    waveform_data_offset::UInt64
+    waveform_packet_size::UInt32
+    waveform_return_point_location::Float32  # ps
+    xt::Float32
+    yt::Float32
+    zt::Float32
+end
+
 # for convenience in function signatures
 const LasPointColor = Union{LasPoint2,LasPoint3}
 const LasPointTime = Union{LasPoint1,LasPoint3}

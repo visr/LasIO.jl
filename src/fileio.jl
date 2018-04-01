@@ -1,15 +1,23 @@
 using Mmap
 
+pointformats = Dict(
+    0x00 => LasPoint0,
+    0x01 => LasPoint1,
+    0x02 => LasPoint2,
+    0x03 => LasPoint3,
+    0x04 => LasPoint4,
+    0x05 => LasPoint5,
+    0x06 => LasPoint6,
+    0x07 => LasPoint7,
+    0x08 => LasPoint8,
+    0x09 => LasPoint9,
+    0x10 => LasPoint10
+)
+
 function pointformat(header::LasHeader)
     id = header.data_format_id
-    if id == 0x00
-        return LasPoint0
-    elseif id == 0x01
-        return LasPoint1
-    elseif id == 0x02
-        return LasPoint2
-    elseif id == 0x03
-        return LasPoint3
+    if id in keys(pointformats)
+        return pointformats[id]
     else
         error("unsupported point format $(Int(id))")
     end
@@ -28,8 +36,10 @@ end
 function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
+    lv = VersionNumber(header.version_major, header.version_minor)
 
-    n = header.records_count
+    n = lv >= v"1.4" ? header.records_count_new : header.records_count
+    println("# points $n")
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
@@ -41,9 +51,13 @@ end
 function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
+    println(header)
+    lv = VersionNumber(header.version_major, header.version_minor)
 
-    n = header.records_count
+    n = lv >= v"1.4" ? header.records_count_new : header.records_count
+    println("# points $n")
     pointtype = pointformat(header)
+    println("type $pointtype")
 
     if mmap
         pointsize = Int(header.data_record_length)
