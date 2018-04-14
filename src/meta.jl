@@ -1,13 +1,15 @@
+"""Returns fieldtypes like fieldnames."""
+function fieldtypes(T::Type) return [fieldtype(T, i) for i = 1:length(fieldnames(T))] end
+
 "Generate read (unpack) method for structs."
 function generate_read(T::Type)
-    fc = fieldcount(T)
-    types = [fieldtype(T, i) for i = 1:fc]
+    types = fieldtypes(T)
 
     # Create unpack function expression
     function_expression = :(function Base.read(io::IO, t::Type{$T}) end)
 
     # Create Type call expression and add parameters
-    type_expression = :(($T)())
+    type_expression = quote end
     for t in types
         read_expression = :(read(io, $t))
         append!(type_expression.args, 0)  # dummy with known length
@@ -27,8 +29,8 @@ function generate_write(T::Type)
 
     body_expression = quote end
     for t in fieldnames(T)
-        append!(body_expression.args, 0)  # dummy with known length
         write_expression = :(write(io, T.$t))
+        append!(body_expression.args, 0)  # dummy with known length
         body_expression.args[end] = write_expression
     end
 
@@ -60,4 +62,22 @@ macro gen_io(typ::Expr)
     ret = Expr(:toplevel, :(Base.@__doc__ $(typ)))
     push!(ret.args, :(generate_io($T)))
     return esc(ret)
+end
+
+"""Combines base struct with provided fieldnames and types to generate new struct."""
+function gen_append_struct(T::Type, extrafields::Vector{Tuple{Symbol, DataType}})
+    name = gensym("$T")  # this name has # in there (!)
+    struct_expression = :(struct $name <: LasPoint end)
+
+    basefields = collect(zip(fieldnames(T), fieldtypes(T)))
+    fields = vcat(basefields, extrafields)
+
+    for (fname, ftype) in fields
+        field = Expr(:(::), fname, ftype)
+        append!(struct_expression.args[3].args, 0)  # dummy with known length
+        struct_expression.args[3].args[end] = field
+    end
+
+    eval(struct_expression)
+    eval(name)
 end
