@@ -77,7 +77,7 @@ function load(s::Stream{format"LAS"}; mmap=false)
         println(header.waveform_offset)
         push!(evlrs, read(s, ExtendedLasVariableLengthRecord))
     elseif lv == v"1.4" && header.n_evlr > 0
-        prinlnt(header.evlr_offset)
+        println(header.evlr_offset)
         for i=1:header.n_evlr
             push!(evlrs, read(s, ExtendedLasVariableLengthRecord))
         end
