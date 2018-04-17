@@ -105,7 +105,7 @@ end
 # Added in ASPRS LAS 1.3
 """"ASPRS LAS point data record format 4
 which adds waveform packets to format 1."""
-@gen_io mutable struct LasPoint4 <: LasPoint
+@gen_io struct LasPoint4 <: LasPoint
     # Format 1
     x::Int32
     y::Int32
@@ -130,7 +130,7 @@ end
 
 """ASPRS LAS point data record format 5
 which adds waveform packets to format 3."""
-@gen_io mutable struct LasPoint5 <: LasPoint
+@gen_io struct LasPoint5 <: LasPoint
     # Format 3
     x::Int32
     y::Int32
@@ -158,7 +158,7 @@ end
 # Added in ASPRS LAS 1.4
 """"ASPRS LAS point data record format 6
 which serves as a core 30 bytes for formats 6-10."""
-@gen_io mutable struct LasPoint6 <: LasPoint
+@gen_io struct LasPoint6 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -174,7 +174,7 @@ end
 
 """"ASPRS LAS point data record format 7
 which adds RGB to format 6."""
-@gen_io mutable struct LasPoint7 <: LasPoint
+@gen_io struct LasPoint7 <: LasPoint
     # Format 6
     x::Int32
     y::Int32
@@ -195,7 +195,7 @@ end
 
 """"ASPRS LAS point data record format 8
 which adds NIR to format 7."""
-@gen_io mutable struct LasPoint8 <: LasPoint
+@gen_io struct LasPoint8 <: LasPoint
     # Format 6
     x::Int32
     y::Int32
@@ -218,7 +218,7 @@ end
 
 """"ASPRS LAS point data record format 9
 which adds wave packets to format 6."""
-@gen_io mutable struct LasPoint9 <: LasPoint
+@gen_io struct LasPoint9 <: LasPoint
     # Format 6
     x::Int32
     y::Int32
@@ -244,7 +244,7 @@ end
 
 """"ASPRS LAS point data record format 10
 which adds wave packets to format 8."""
-@gen_io mutable struct LasPoint10 <: LasPoint
+@gen_io struct LasPoint10 <: LasPoint
     # Format 6
     x::Int32
     y::Int32
@@ -283,6 +283,12 @@ function Base.show(io::IO, p::LasPoint)
     z = Int(p.z)
     cl = Int(classification(p))
     println(io, "LasPoint(x=$x, y=$y, z=$z, classification=$cl)")
+end
+
+function Base.showall(io::IO, h::LasPoint)
+    for name in fieldnames(h)
+        println(io, string("\t$name = $(getfield(h,name))"))
+    end
 end
 
 # Extend base by enabling reading/writing relevant FixedPointNumbers from IO.

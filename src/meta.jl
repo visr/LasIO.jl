@@ -9,7 +9,7 @@ function generate_read(T::Type)
     function_expression = :(function Base.read(io::IO, t::Type{$T}) end)
 
     # Create Type call expression and add parameters
-    type_expression = quote end
+    type_expression = :((t)())
     for t in types
         read_expression = :(read(io, $t))
         append!(type_expression.args, 0)  # dummy with known length

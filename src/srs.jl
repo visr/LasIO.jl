@@ -154,6 +154,9 @@ function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
     elseif record_id == id_geoasciiparamstag
         ascii_params = readstring(io, nb)
         return GeoAsciiParamsTag(ascii_params, nb)
+    # waveform descriptor
+    elseif (100 <= record_id < 355)
+        return read(io, waveform_descriptor)
     else
         return read(io, nb)
     end

@@ -289,3 +289,7 @@ function is_wkt(h::LasHeader)
     end
     wkit_bit
 end
+
+function waveform_internal(h::LasHeader)
+    isodd((h.global_encoding >>> 1) & 0x0001)
+end

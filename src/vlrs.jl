@@ -89,3 +89,24 @@ end
 # assumes it is not extended VLR
 Base.sizeof(vlr::LasVariableLengthRecord) = 54 + vlr.record_length_after_header
 Base.sizeof(vlr::ExtendedLasVariableLengthRecord) = 60 + vlr.record_length_after_header
+
+"""LASF_Spec record id 0."""
+struct classification
+    class_number::UInt8
+    description::AbstractString
+end
+
+# """LASF_Spec record id 4."""
+# struct extra_bytes
+#     reserved::UInt16; # 2 bytes
+#     data_type::UInt8 # 1 byte
+#     options::UInt8 # 1 byte
+#     char name[32]; # 32 bytes
+#     unsigned char unused[4]; # 4 bytes
+#     anytype no_data[3]; # 24 = 3*8 bytes
+#     anytype min[3]; # 24 = 3*8 bytes
+#     anytype max[3]; # 24 = 3*8 bytes
+#     double scale[3]; # 24 = 3*8 bytes
+#     double offset[3]; # 24 = 3*8 bytes
+#     char description[32]; # 32 bytes
+# end

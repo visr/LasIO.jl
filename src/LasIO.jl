@@ -55,6 +55,7 @@ include("meta.jl")
 include("point.jl")
 include("util.jl")
 include("fileio.jl")
+include("waveform.jl")
 include("srs.jl")
 
 function __init__()
