@@ -29,11 +29,11 @@ mutable struct LasHeader
     guid_1::UInt32
     guid_2::UInt16
     guid_3::UInt16
-    guid_4::AbstractString
+    guid_4::FixedString{8}
     version_major::UInt8
     version_minor::UInt8
-    system_id::AbstractString
-    software_id::AbstractString
+    system_id::FixedString{32}
+    software_id::FixedString{32}
     creation_doy::UInt16
     creation_year::UInt16
     header_size::UInt16
@@ -119,11 +119,11 @@ function Base.read(io::IO, ::Type{LasHeader})
     guid_1 = read(io, UInt32)
     guid_2 = read(io, UInt16)
     guid_3 = read(io, UInt16)
-    guid_4 = readstring(io, 8)
+    guid_4 = read(io, FixedString{8})
     version_major = read(io, UInt8)
     version_minor = read(io, UInt8)
-    system_id = readstring(io, 32)
-    software_id = readstring(io, 32)
+    system_id = read(io, FixedString{32})
+    software_id = read(io, FixedString{32})
     creation_doy = read(io, UInt16)
     creation_year = read(io, UInt16)
     header_size = read(io, UInt16)
@@ -172,8 +172,8 @@ function Base.read(io::IO, ::Type{LasHeader})
     # println("hsize: $header_size")
     # println("off: $data_offset")
     header_extra_size = header_size - hsizes[lv]
-    println("hextra $header_extra_size")
-    user_defined_bytes = header_extra_size > 0 ? read(io, header_extra_size) : Vector{UInt8}()
+    println("Skipping hextra $header_extra_size")
+    _ = header_extra_size > 0 ? read(io, header_extra_size) : Vector{UInt8}()
 
     vlrs = [read(io, LasVariableLengthRecord) for _=1:n_vlr]
 
@@ -182,7 +182,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     pos = header_size + vlrsize
     vlr_extra_size = data_offset - pos
     println("vlrextra $vlr_extra_size")
-    _ = vlr_extra_size > 0 ? read(io, vlr_extra_size) : Vector{UInt8}()
+    user_defined_bytes = vlr_extra_size > 0 ? read(io, vlr_extra_size) : Vector{UInt8}()
 
     # put it all in a type
     header = LasHeader(
@@ -233,11 +233,11 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.guid_1)
     write(io, h.guid_2)
     write(io, h.guid_3)
-    writestring(io, h.guid_4, 8)
+    write(io, h.guid_4)
     write(io, h.version_major)
     write(io, h.version_minor)
-    writestring(io, h.system_id, 32)
-    writestring(io, h.software_id, 32)
+    write(io, h.system_id)
+    write(io, h.software_id)
     write(io, h.creation_doy)
     write(io, h.creation_year)
     write(io, h.header_size)

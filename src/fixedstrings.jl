@@ -37,7 +37,7 @@ end
 
 # Minimal AbstractString required interface
 Base.endof{N}(f::FixedString{N})  = endof(f.str)
-Base.next{N}(f::FixedString{N}, i::Int)   = next(f.str, i)
+Base.next{N}(f::FixedString{N}, i::Int) = next(f.str, i)
 Base.sizeof{N}(f::FixedString{N}) = N
 
 # Be permissive by setting nullterm to false for reading by default.

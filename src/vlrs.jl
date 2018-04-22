@@ -4,12 +4,14 @@ organization defined binary metadata in LAS files.
 """
 struct LasVariableLengthRecord
     reserved::UInt16
-    user_id::AbstractString
+    user_id::FixedString{16}
     record_id::UInt16
     record_length_after_header::UInt16
-    description::AbstractString
+    description::FixedString{32}
     data  # anything with read+write+sizeof methods, like GeoKeys or Vector{UInt8}
 end
+
+LasVariableLengthRecord(r::UInt16, s::String, i::UInt16, d::String, x::Any) = LasVariableLengthRecord(r, FixedString{16}(s), i, sizeof(x), FixedString{32}(d), x)
 
 """
 A LAS "extended variable length record" - the generic way to store large
@@ -17,12 +19,15 @@ extra user or organization defined binary metadata in LAS files.
 """
 struct ExtendedLasVariableLengthRecord
     reserved::UInt16
-    user_id::AbstractString  # 16 bytes
+    user_id::FixedString{16}  # 16 bytes
     record_id::UInt16
     record_length_after_header::UInt64
-    description::AbstractString  # 32 bytes
+    description::FixedString{32}  # 32 bytes
     data  # anything with read+write+sizeof methods, like GeoKeys or Vector{UInt8}
 end
+
+LasVariableLengthRecord(r::UInt16, s::String, i::UInt16, d::String, x::Any) = LasVariableLengthRecord(r, FixedString{16}(s), i, sizeof(x), FixedString{32}(d), x)
+
 
 # Read a variable length metadata record from a stream.
 #
@@ -33,10 +38,10 @@ function Base.read(io::IO, ::Type{LasVariableLengthRecord})
     # versions set it to 0xAABB.  Whatever, I guess we just store&ignore for now.
     # See https://groups.google.com/forum/#!topic/lasroom/SVtNBA2y9iI
     reserved = read(io, UInt16)
-    user_id = readstring(io, 16)
+    user_id = read(io, FixedString{16})
     record_id = read(io, UInt16)
     record_data_length = read(io, UInt16)
-    description = readstring(io, 32)
+    description = read(io, FixedString{32})
     println(record_data_length)
     println(record_id)
     println(description)
@@ -56,10 +61,10 @@ function Base.read(io::IO, ::Type{ExtendedLasVariableLengthRecord})
     # versions set it to 0xAABB.  Whatever, I guess we just store&ignore for now.
     # See https://groups.google.com/forum/#!topic/lasroom/SVtNBA2y9iI
     reserved = read(io, UInt16)
-    user_id = readstring(io, 16)
+    user_id = read(io, FixedString{16})
     record_id = read(io, UInt16)
     record_data_length = read(io, UInt64)
-    description = readstring(io, 32)
+    description = read(io, FixedString{32})
     println(record_data_length)
     println(record_id)
     println(description)
@@ -76,11 +81,11 @@ end
 
 function Base.write(io::IO, vlr::LasVariableLengthRecord, extended::Bool=false)
     write(io, vlr.reserved)
-    writestring(io, vlr.user_id, 16)
+    write(io, vlr.user_id)
     write(io, vlr.record_id)
     record_data_length = extended ? UInt64(sizeof(vlr.data)) : UInt16(sizeof(vlr.data))
     write(io, record_data_length)
-    writestring(io, vlr.description, 32)
+    write(io, vlr.description)
     write(io, vlr.data)
     nothing
 end

@@ -97,7 +97,7 @@ srsheader, srspoints = load(srsfile)
 for record in srsheader.variable_length_records
     @test record.reserved === 0xaabb
     @test record.user_id == "LASF_Projection"
-    @test typeof(record.description) == String
+    @test typeof(record.description) == LasIO.FixedString{32}
     if record.record_id == 34735
         @test record.data.key_directory_version === UInt16(1)
         @test record.data.key_reversion === UInt16(1)
