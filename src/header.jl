@@ -64,7 +64,7 @@ mutable struct LasHeader
     point_return_count_new::Vector{UInt64}  # 15
 
     # VLRs
-    variable_length_records::Vector{LasVariableLengthRecord}
+    variable_length_records::Dict{UInt16, Union{LasVariableLengthRecord, ExtendedLasVariableLengthRecord}}
 
     # Header can have extra bits
     user_defined_bytes::Vector{UInt8}
@@ -80,36 +80,12 @@ function Base.showall(io::IO, h::LasHeader)
     for name in fieldnames(h)
         if (name == :variable_length_records) || (name == :extended_variable_length_records)
             println(io, string("\tvariable_length_records = "))
-            for vlr in h.variable_length_records
+            for (_, vlr) in h.variable_length_records
                 println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(vlr.record_length_after_header) bytes...)")
             end
         else
             println(io, string("\t$name = $(getfield(h,name))"))
         end
-    end
-end
-
-function readstring(io, nb::Integer)
-    bytes = read(io, nb)
-    # strip possible null bytes
-    lastchar = findlast(bytes .!= 0)
-    if lastchar == nothing
-        return ""
-    else
-        return String(bytes[1:lastchar])
-    end
-end
-
-function writestring(io, str::AbstractString, nb::Integer)
-    n = length(str)
-    npad = nb - n
-    if npad < 0
-        error("string too long")
-    elseif npad == 0
-        write(io, str)
-    else
-        writestr = string(str * "\0"^npad)
-        write(io, writestr)
     end
 end
 
@@ -148,12 +124,8 @@ function Base.read(io::IO, ::Type{LasHeader})
 
     # determine ASPRS format
     lv = VersionNumber(version_major, version_minor)
-    println(lv)
-    # println("pos 1.3 $(position(io))")
     # ASPRS LAS 1.3
     waveform_offset = lv >= v"1.3" ? read(io, UInt64) : 0
-    # println("pos 1.3 $(position(io))")
-    println("wave off $waveform_offset")
 
     # ASPRS LAS 1.4
     evlr_offset = lv >= v"1.4" ? read(io, UInt64) : 0
@@ -161,27 +133,18 @@ function Base.read(io::IO, ::Type{LasHeader})
     records_count_new = lv >= v"1.4" ? read(io, UInt64) : records_count
     point_return_count_new = lv >= v"1.4" ? read!(io, Vector{UInt64}(15)) : Vector{UInt64}(15)
 
-    println("# vlr $n_vlr")
-    println("# evlr $n_evlr")
-
-    println("old $records_count new $records_count_new")
-
     # Header could be longer than standard. To avoid a seek that we cannot do on STDIN,
     # we calculate how much to read in.
-    # println("pos actual: $(position(io))")
-    # println("hsize: $header_size")
-    # println("off: $data_offset")
     header_extra_size = header_size - hsizes[lv]
-    println("Skipping hextra $header_extra_size")
     _ = header_extra_size > 0 ? read(io, header_extra_size) : Vector{UInt8}()
 
-    vlrs = [read(io, LasVariableLengthRecord) for _=1:n_vlr]
+    vlrlist = [read(io, LasVariableLengthRecord) for _=1:n_vlr]
+    vlrs = Dict(v.record_id => v for v in vlrlist)
 
     # Skip any data remaining
-    vlrsize = length(vlrs) > 0 ? sum(sizeof, vlrs) : 0
+    vlrsize = length(vlrlist) > 0 ? sum(sizeof, vlrlist) : 0
     pos = header_size + vlrsize
     vlr_extra_size = data_offset - pos
-    println("vlrextra $vlr_extra_size")
     user_defined_bytes = vlr_extra_size > 0 ? read(io, vlr_extra_size) : Vector{UInt8}()
 
     # put it all in a type
@@ -242,7 +205,7 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.creation_year)
     write(io, h.header_size)
     write(io, h.data_offset)
-    @assert length(h.variable_length_records) == h.n_vlr
+    @assert length(h.variable_length_records) == h.n_vlr + h.n_evlr
     write(io, h.n_vlr)
     write(io, h.data_format_id)
     write(io, h.data_record_length)
@@ -266,10 +229,15 @@ function Base.write(io::IO, h::LasHeader)
         # start of waveform data record (unsupported)
         write(io, UInt64(0))
     end
-    for i in 1:h.n_vlr
-        write(io, h.variable_length_records[i])
+
+    # Write VLRS
+    for k in sort(collect(keys(h.variable_length_records)))
+        vlr = h.variable_length_records[k]
+        typeof(vlr) == LasVariableLengthRecord && write(io, vlr)
     end
+
     write(io, h.user_defined_bytes)
+
     # note that for LAS 1.4 a few new parts need to be written
     # possibly introduce typed headers like the points
     nothing

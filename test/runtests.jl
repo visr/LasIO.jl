@@ -2,14 +2,11 @@ using FileIO
 using LasIO
 using Test
 
+@testset "LasIO" begin
 include("stream.jl")
 include("fixedstrings.jl")
 
 workdir = dirname(@__FILE__)
-# source: http://www.liblas.org/samples/
-filename = "libLAS_1.2.las" # point format 0
-testfile = joinpath(workdir, filename)
-writefile = joinpath(workdir, "libLAS_1.2-out.las")
 
 "Find the centroid of all points in a LAS file"
 function centroid(io, header)
@@ -36,103 +33,123 @@ function centroid(io, header)
     x_avg, y_avg, z_avg
 end
 
-# reading point by point
-open(testfile) do io
-    # magic bytes
-    @test String(read(io, 4)) == "LASF"
-    header = read(io, LasHeader)
+@testset "Single point" begin
+    # reading point by point
+    # source: http://www.liblas.org/samples/
+    filename = "libLAS_1.2.las" # point format 0
+    testfile = joinpath(workdir, filename)
+    writefile = joinpath(workdir, "libLAS_1.2-out.las")
 
-    seek(io, header.data_offset)
-    x_avg, y_avg, z_avg = centroid(io, header)
+    open(testfile) do io
+        # magic bytes
+        @test String(read(io, 4)) == "LASF"
+        header = read(io, LasHeader)
 
-    @test x_avg ≈ 1442694.2739025319
-    @test y_avg ≈ 377449.24373880465
-    @test z_avg ≈ 861.60254888088491
+        seek(io, header.data_offset)
+        x_avg, y_avg, z_avg = centroid(io, header)
 
-    seek(io, header.data_offset)
-    p = read(io, LasPoint0)
+        @test x_avg ≈ 1442694.2739025319
+        @test y_avg ≈ 377449.24373880465
+        @test z_avg ≈ 861.60254888088491
 
-    @test xcoord(p, header) ≈ 1.44013394e6
-    @test xcoord(1.44013394e6, header) ≈ p.x
-    @test ycoord(p, header) ≈ 375000.23
-    @test ycoord(375000.23, header) ≈ p.y
-    @test zcoord(p, header) ≈ 846.66
-    @test zcoord(846.66, header) ≈ p.z
-    @test intensity(p) === 0x00fa
-    @test scan_angle(p) === Int8(0)
-    @test user_data(p) === 0x00
-    @test pt_src_id(p) === 0x001d
-    @test return_number(p) === 0x00
-    @test number_of_returns(p) === 0x00
-    @test scan_direction(p) === false
-    @test edge_of_flight_line(p) === false
-    @test classification(p) === 0x02
-    @test synthetic(p) === false
-    @test key_point(p) === false
-    @test withheld(p) === false
+        seek(io, header.data_offset)
+        p = read(io, LasPoint0)
 
-    # raw bytes composed of bit fields
-    @test flag_byte(p) === 0x00
-    @test raw_classification(p) === 0x02
+        @test xcoord(p, header) ≈ 1.44013394e6
+        @test xcoord(1.44013394e6, header) ≈ p.x
+        @test ycoord(p, header) ≈ 375000.23
+        @test ycoord(375000.23, header) ≈ p.y
+        @test zcoord(p, header) ≈ 846.66
+        @test zcoord(846.66, header) ≈ p.z
+        @test intensity(p) === 0x00fa
+        @test scan_angle(p) === Int8(0)
+        @test user_data(p) === 0x00
+        @test pt_src_id(p) === 0x001d
+        @test return_number(p) === 0x00
+        @test number_of_returns(p) === 0x00
+        @test scan_direction(p) === false
+        @test edge_of_flight_line(p) === false
+        @test classification(p) === 0x02
+        @test synthetic(p) === false
+        @test key_point(p) === false
+        @test withheld(p) === false
 
-    # recompose bytes with bit fields
-    @test flag_byte(return_number(p),number_of_returns(p),scan_direction(p),edge_of_flight_line(p)) === p.flag_byte
-    @test raw_classification(classification(p),synthetic(p),key_point(p),withheld(p)) === p.raw_classification
+        # raw bytes composed of bit fields
+        @test flag_byte(p) === 0x00
+        @test raw_classification(p) === 0x02
 
-    # TODO GPS time, colors (not in this test file, is point data format 0)
-end
+        # recompose bytes with bit fields
+        @test flag_byte(return_number(p),number_of_returns(p),scan_direction(p),edge_of_flight_line(p)) === p.flag_byte
+        @test raw_classification(classification(p),synthetic(p),key_point(p),withheld(p)) === p.raw_classification
 
-# reading complete file into memory
-# test if output file matches input file
-header, pointdata = load(testfile)
-n = length(pointdata)
-save(writefile, header, pointdata)
-@test hash(read(testfile)) == hash(read(writefile))
-rm(writefile)
-
-# testing a las file version 1.0 point format 1 file with VLRs
-srsfile = joinpath(workdir, "srs.las")
-srsfile_out = joinpath(workdir, "srs-out.las")
-srsheader, srspoints = load(srsfile)
-for record in srsheader.variable_length_records
-    @test record.reserved === 0xaabb
-    @test record.user_id == "LASF_Projection"
-    @test typeof(record.description) == LasIO.FixedString{32}
-    if record.record_id == 34735
-        @test record.data.key_directory_version === UInt16(1)
-        @test record.data.key_reversion === UInt16(1)
-        @test record.data.minor_revision === UInt16(0)
-        @test record.data.number_of_keys === UInt16(length((record.data.keys)))
-        @test typeof(record.data.keys) == Vector{LasIO.KeyEntry}
+        # TODO GPS time, colors (not in this test file, is point data format 0)
     end
 end
-@test srsheader.version_major == 1
-@test srsheader.version_minor == 0
-@test srsheader.data_format_id == 1
-@test srsheader.n_vlr == 3
-@test isa(srsheader.variable_length_records, Vector{LasVariableLengthRecord})
-for vlr in srsheader.variable_length_records
-    @test vlr.reserved === 0xaabb
-    @test vlr.user_id == "LASF_Projection"
-    @test vlr.description == ""
+
+@testset "Complete file" begin
+    # reading complete file into memory
+    # source: http://www.liblas.org/samples/
+    filename = "libLAS_1.2.las" # point format 0
+    testfile = joinpath(workdir, filename)
+    writefile = joinpath(workdir, "libLAS_1.2-out.las")
+
+    # test if output file matches input file
+    header, pointdata = load(testfile)
+    @test isnull(LasIO.epsg_code(header))
+    n = length(pointdata)
+    save(writefile, header, pointdata)
+    @test hash(read(testfile)) == hash(read(writefile))
+    rm(writefile)
 end
 
-@test srsheader.variable_length_records[1].record_id == LasIO.id_geokeydirectorytag
-@test srsheader.variable_length_records[2].record_id == LasIO.id_geodoubleparamstag
-@test srsheader.variable_length_records[3].record_id == LasIO.id_geoasciiparamstag
-@test typeof(srsheader.variable_length_records[1].data) == LasIO.GeoKeys
-@test typeof(srsheader.variable_length_records[2].data) == LasIO.GeoDoubleParamsTag
-@test typeof(srsheader.variable_length_records[3].data) == LasIO.GeoAsciiParamsTag
+@testset "File Format 1 with VLRS" begin
+    # test
+    # testing a las file version 1.0 point format 1 file with VLRs
+    srsfile = joinpath(workdir, "srs.las")
+    srsfile_out = joinpath(workdir, "srs-out.las")
+    srsheader, srspoints = load(srsfile)
+    for (_, record) in srsheader.variable_length_records
+            @test record.reserved === 0xaabb
+            @test record.user_id == "LASF_Projection"
+            @test typeof(record.description) == LasIO.FixedString{32}
+            if record.record_id == 34735
+                @test record.data.key_directory_version === UInt16(1)
+                @test record.data.key_reversion === UInt16(1)
+                @test record.data.minor_revision === UInt16(0)
+                @test record.data.number_of_keys === UInt16(length((record.data.keys)))
+                @test typeof(record.data.keys) == Vector{LasIO.KeyEntry}
+        end
+    end
 
-@test LasIO.epsg_code(header) === nothing
-@test LasIO.epsg_code(srsheader) === UInt16(32617)
-# set the SRS. Note: this will not change points, but merely set SRS-metadata.
-epsgheader = deepcopy(srsheader)
-LasIO.epsg_code!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS
-@test epsgheader.variable_length_records[1].record_id == LasIO.id_geokeydirectorytag
-@test count(LasIO.is_srs, srsheader.variable_length_records) == 3
-@test count(LasIO.is_srs, epsgheader.variable_length_records) == 1
+    @test srsheader.version_major == 1
+    @test srsheader.version_minor == 0
+    @test srsheader.data_format_id == 1
+    @test srsheader.n_vlr == 3
+    @test isa(srsheader.variable_length_records, Dict{UInt16, Union{LasVariableLengthRecord, ExtendedLasVariableLengthRecord}})
+    for (_, vlr) in srsheader.variable_length_records
+        @test vlr.reserved === 0xaabb
+        @test vlr.user_id == "LASF_Projection"
+        @test vlr.description == ""
+    end
 
-save(srsfile_out, srsheader, srspoints)
-@test hash(read(srsfile)) == hash(read(srsfile_out))
-rm(srsfile_out)
+    @test srsheader.variable_length_records[LasIO.id_geokeydirectorytag].record_id == LasIO.id_geokeydirectorytag
+    @test srsheader.variable_length_records[LasIO.id_geodoubleparamstag].record_id == LasIO.id_geodoubleparamstag
+    @test srsheader.variable_length_records[LasIO.id_geoasciiparamstag].record_id == LasIO.id_geoasciiparamstag
+    @test typeof(srsheader.variable_length_records[LasIO.id_geokeydirectorytag].data) == LasIO.GeoKeys
+    @test typeof(srsheader.variable_length_records[LasIO.id_geodoubleparamstag].data) == LasIO.GeoDoubleParamsTag
+    @test typeof(srsheader.variable_length_records[LasIO.id_geoasciiparamstag].data) == FixedString{0x0100}
+
+    @test LasIO.epsg_code(srsheader) === Nullable{Int}(32617)
+    # set the SRS. Note: this will not change points, but merely set SRS-metadata.
+    epsgheader = deepcopy(srsheader)
+    LasIO.epsg_code!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS
+    @test epsgheader.variable_length_records[LasIO.id_geokeydirectorytag].record_id == LasIO.id_geokeydirectorytag
+    @test count(LasIO.is_srs, srsheader.variable_length_records) == 3
+    @test count(LasIO.is_srs, epsgheader.variable_length_records) == 1
+
+    save(srsfile_out, srsheader, srspoints)
+    @test hash(read(srsfile)) == hash(read(srsfile_out))
+    rm(srsfile_out)
+end
+
+end

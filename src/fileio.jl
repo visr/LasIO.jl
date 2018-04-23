@@ -27,7 +27,6 @@ end
 skiplasf(s::Union{Stream{format"LAS"}, Stream{format"LAZ"}, IO}) = read(s, UInt32)
 
 function load(f::File{format"LAS"}; mmap=false)
-    println("Reading $(f.filename)")
     open(f) do s
         load(s; mmap=mmap)
     end
@@ -38,9 +37,7 @@ function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
     lv = VersionNumber(header.version_major, header.version_minor)
-
-    n = lv >= v"1.4" ? header.records_count_new : header.records_count
-    println("# points $n")
+    n = header.records_count_new
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
@@ -50,16 +47,12 @@ function load(s::Base.AbstractPipe)
 end
 
 function load(s::Stream{format"LAS"}; mmap=false)
-    println("Loading stream with mmap $mmap.")
     skiplasf(s)
     header = read(s, LasHeader)
-    println(header)
     lv = VersionNumber(header.version_major, header.version_minor)
 
     n = header.records_count_new
-    println("# points $n")
     pointtype = pointformat(header)
-    println("type $pointtype")
 
     if mmap
         pointsize = Int(header.data_record_length)
@@ -72,36 +65,20 @@ function load(s::Stream{format"LAS"}; mmap=false)
         end
     end
 
-    # Extended Variable Length Records
-    evlrs = Vector{ExtendedLasVariableLengthRecord}()
-    println("Current pos: $(position(s))")
-    println("Start of wav pos: $(header.waveform_offset)")
+    # Extended Variable Length Records for 1.3 and 1.4
     if lv == v"1.3" && header.waveform_offset > 0
-        println(header.waveform_offset)
         evlr = read(s, ExtendedLasVariableLengthRecord)
-        push!(evlrs, evlr)
-
-        # Read waveform packets
-        # pwaves = Vector{Array{Float32}}(length(pointdata))
-
-
-        # @show pwaves
-
+        header.variable_length_records[evlr.record_id] = evlr
     elseif lv == v"1.4" && header.n_evlr > 0
-        println(header.evlr_offset)
         for i=1:header.n_evlr
-            push!(evlrs, read(s, ExtendedLasVariableLengthRecord))
+            evlr = read(s, ExtendedLasVariableLengthRecord)
+            header.variable_length_records[evlr.record_id] = evlr
         end
     else
         nothing
     end
 
-    @show eof(s)
-
-    #
-
-
-    header, pointdata, evlrs
+    header, pointdata
 end
 
 function load(f::File{format"LAZ"})
@@ -139,7 +116,6 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVect
     # write header
     write(s, magic(format"LAS"))
     write(s, header)
-    println("$(position(s)) vs $(header.data_offset)")
     # write points
     for p in pointdata
         write(s, p)

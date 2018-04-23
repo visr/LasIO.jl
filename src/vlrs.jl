@@ -26,8 +26,11 @@ struct ExtendedLasVariableLengthRecord
     data  # anything with read+write+sizeof methods, like GeoKeys or Vector{UInt8}
 end
 
-LasVariableLengthRecord(r::UInt16, s::String, i::UInt16, d::String, x::Any) = LasVariableLengthRecord(r, FixedString{16}(s), i, sizeof(x), FixedString{32}(d), x)
+ExtendedLasVariableLengthRecord(r::UInt16, s::String, i::UInt16, d::String, x::Any) = LasVariableLengthRecord(r, FixedString{16}(s), i, sizeof(x), FixedString{32}(d), x)
 
+function Base.show(io::IO, vlr::Union{LasVariableLengthRecord, ExtendedLasVariableLengthRecord})
+    println(io, "Variable length record with id: $(vlr.record_id), description: $(vlr.description)")
+end
 
 # Read a variable length metadata record from a stream.
 #
@@ -42,9 +45,6 @@ function Base.read(io::IO, ::Type{LasVariableLengthRecord})
     record_id = read(io, UInt16)
     record_data_length = read(io, UInt16)
     description = read(io, FixedString{32})
-    println(record_data_length)
-    println(record_id)
-    println(description)
     data = read_vlr_data(io, record_id, record_data_length)
     LasVariableLengthRecord(
         reserved,
@@ -65,9 +65,6 @@ function Base.read(io::IO, ::Type{ExtendedLasVariableLengthRecord})
     record_id = read(io, UInt16)
     record_data_length = read(io, UInt64)
     description = read(io, FixedString{32})
-    println(record_data_length)
-    println(record_id)
-    println(description)
     data = read_vlr_data(io, record_id, record_data_length)
     ExtendedLasVariableLengthRecord(
         reserved,

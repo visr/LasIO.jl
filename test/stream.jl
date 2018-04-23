@@ -19,10 +19,6 @@ using Test
     srsfile = joinpath(workdir, "srs.las")
     srsfile_out = joinpath(workdir, "srs-out.las")
     srsheader, srspoints = load(srsfile, mmap=true)
-    println(srspoints)
-    println(length(srspoints))
-    println(srspoints[end])
-    @show srspoints[10]
     save(srsfile_out, srsheader, srspoints)
     @test hash(read(srsfile)) == hash(read(srsfile_out))
     # rm(srsfile_out)
