@@ -3,8 +3,7 @@ function fieldtypes(T::Type) return [fieldtype(T, i) for i = 1:length(fieldnames
 
 "Generate read (unpack) method for structs."
 function generate_read(T::Type)
-    fc = @compat fieldcount(T)
-    types = [fieldtype(T, i) for i = 1:fc]
+    types = fieldtypes(T)
 
     # Create unpack function expression
     function_expression = :(function Base.read(io::IO, t::Type{$T}) end)

@@ -137,22 +137,7 @@ function epsg_code!(header::LasHeader, epsg::Integer)
     header
 end
 
-function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
-    if record_id == id_geokeydirectorytag
-        return read(io, GeoKeys)
-    elseif record_id == id_geodoubleparamstag
-        double_params = zeros(nb ÷ 8)
-        read!(io, double_params)
-        return GeoDoubleParamsTag(double_params)
-    elseif record_id == id_geoasciiparamstag
-        return read(io, FixedString{nb})
-    # waveform descriptor
-    elseif (100 <= record_id < 355)
-        return read(io, waveform_descriptor)
-    else
-        return read(io, nb)
-    end
-end
+epsg_code!(header::LasHeader, epsg::Nullable{<:Integer}) = epsg_code!(header, get(epsg))
 
 function Base.read(io::IO, ::Type{GeoKeys})
     key_directory_version = read(io, UInt16)

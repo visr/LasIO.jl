@@ -42,6 +42,8 @@ function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
     println(io, "$(typeof(pointdata)) with $n points.")
 end
 
+Base.sizeof(p::T) where T<:LasPoint = sum(sizeof, fieldtypes(p))
+
 "ASPRS LAS point data record format 0"
 @gen_io struct LasPoint0 <: LasPoint
     x::Int32
