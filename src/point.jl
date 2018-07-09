@@ -7,16 +7,17 @@ Custom PointVector struct for memory mapped LasPoints.
 Inspiration taken from UnalignedVector.jl
 and extended it with custom indexing and packing.
 """
-struct PointVector{T} <: AbstractArray{T,1}
+struct PointVector{T <: LasPoint} <: AbstractArray{T,1}
+    data::Vector{UInt8}
     io::IOBuffer
     n::Int
     pointsize::Int
 
-    function PointVector{T}(data::Vector{UInt8}, pointsize::Integer) where {T}
+    function PointVector{T}(data::Vector{UInt8}, pointsize::Integer; mutable=false) where T <: LasPoint
         n = length(data) ÷ pointsize
 
         # IOBuffer takes (data, readable, writable)
-        new{T}(IOBuffer(data, true, false), n, pointsize)
+        new{T}(data, IOBuffer(data, true, mutable), n, pointsize)
     end
 end
 
@@ -24,17 +25,28 @@ Base.IndexStyle(::Type{PointVector{T}}) where {T} = IndexLinear()
 Base.length(pv::PointVector) = pv.n
 Base.size(pv::PointVector) = (length(pv),)
 
-function Base.getindex(pv::PointVector{T}, i::Int) where {T}
+function sync(pv::PointVector{T}) where T <: LasPoint
+    flush(pv.io)
+    Mmap.sync!(pv.data)
+end
+
+function Base.close(pv::PointVector{T}) where T <: LasPoint
+    close(pv.io)
+    close(pv.data)
+    # delete pv?
+end
+
+function Base.getindex(pv::PointVector{T}, i::Int) where T <: LasPoint
     offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
     position(pv.io) != offset && seek(pv.io, offset)
     read(pv.io, T)
 end
 
-function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where {T}
-    # offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
-    # position(pv.io) != offset && seek(pv.io, offset)
-    # write(pv.io, val)
-    error("Can't write to read only memory mapped file.")
+function Base.setindex!(pv::PointVector{T}, val::T, i::Int) where T <: LasPoint
+    offset = (i-1) * pv.pointsize  # seeking uses 0 based indexing!
+    position(pv.io) != offset && seek(pv.io, offset)
+    write(pv.io, val)
+    flush(pv.io)
 end
 
 function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
@@ -43,7 +55,7 @@ function Base.show(io::IO, pointdata::AbstractVector{<:LasPoint})
 end
 
 "ASPRS LAS point data record format 0"
-@gen_io struct LasPoint0 <: LasPoint
+@gen_io mutable struct LasPoint0 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -56,7 +68,7 @@ end
 end
 
 "ASPRS LAS point data record format 1"
-@gen_io struct LasPoint1 <: LasPoint
+@gen_io mutable struct LasPoint1 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -70,7 +82,7 @@ end
 end
 
 "ASPRS LAS point data record format 2"
-@gen_io struct LasPoint2 <: LasPoint
+@gen_io mutable struct LasPoint2 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -86,7 +98,7 @@ end
 end
 
 "ASPRS LAS point data record format 3"
-@gen_io struct LasPoint3 <: LasPoint
+@gen_io mutable struct LasPoint3 <: LasPoint
     x::Int32
     y::Int32
     z::Int32
@@ -113,10 +125,6 @@ function Base.show(io::IO, p::LasPoint)
     cl = Int(classification(p))
     println(io, "LasPoint(x=$x, y=$y, z=$z, classification=$cl)")
 end
-
-# Extend base by enabling reading/writing relevant FixedPointNumbers from IO.
-Base.read(io::IO, ::Type{N0f16}) = reinterpret(N0f16, read(io, UInt16))
-Base.write(io::IO, t::N0f16) = write(io, reinterpret(UInt16, t))
 
 # functions for IO on points
 
