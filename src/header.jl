@@ -84,11 +84,15 @@ function Base.show(io::IO, header::LasHeader)
     println(io, string("\ty_min = ", header.y_min))
     println(io, string("\tz_max = ", header.z_max))
     println(io, string("\tz_min = ", header.z_min))
-    println(io, string("\tvariable_length_records = "))
 
-    nrecords = max(10, size(header.variable_length_records, 1))
-    for vlr in header.variable_length_records[:nrecords + 1]
-        println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
+    if !isempty(header.variable_length_records)
+        nrecords = min(10, size(header.variable_length_records, 1))
+
+        println(io, string("\tvariable_length_records = "))
+        for vlr in header.variable_length_records[1:nrecords]
+            println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
+        end
+        println("\t\t...")
     end
 end
 
