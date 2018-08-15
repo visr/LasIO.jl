@@ -30,7 +30,7 @@ function load(s::Pipe)
 
     n = header.records_count
     pointtype = pointformat(header)
-    pointdata = Vector{pointtype}(n)
+    pointdata = Vector{pointtype}(undef, n)
     for i=1:n
         pointdata[i] = read(s, pointtype)
     end
@@ -49,7 +49,7 @@ function load(s::Stream{format"LAS"}; mmap=false)
         pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
         pointdata = PointVector{pointtype}(pointbytes, pointsize)
     else
-        pointdata = Vector{pointtype}(n)
+        pointdata = Vector{pointtype}(undef, n)
         for i=1:n
             pointdata[i] = read(s, pointtype)
         end

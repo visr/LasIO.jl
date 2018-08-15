@@ -95,8 +95,12 @@ end
 function readstring(io, nb::Integer)
     bytes = read(io, nb)
     # strip possible null bytes
-    lastchar = findlast(bytes)
-    String(bytes[1:lastchar])
+    lastchar = findlast(bytes .!= 0)
+    if lastchar == nothing
+        return ""
+    else
+        return String(bytes[1:lastchar])
+    end
 end
 
 function writestring(io, str::AbstractString, nb::Integer)
@@ -131,7 +135,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     data_format_id = read(io, UInt8)
     data_record_length = read(io, UInt16)
     records_count = read(io, UInt32)
-    point_return_count = read!(io, Vector{UInt32}(5))
+    point_return_count = read!(io, zeros(UInt32, 5))
     x_scale = read(io, Float64)
     y_scale = read(io, Float64)
     z_scale = read(io, Float64)
