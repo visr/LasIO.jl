@@ -34,3 +34,5 @@ The compressed LAZ format is supported, but requires the user to make sure the `
 using FileIO, LasIO
 header, points = load("test.laz")
 ```
+
+Besides piping through `laszip`, more complete LAZ support is in the works at https://github.com/evetion/LazIO.jl.
