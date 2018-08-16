@@ -1,6 +1,7 @@
 using FileIO
 using LasIO
-using BenchmarkTools, Compat
+using Mmap
+using BenchmarkTools
 
 workdir = dirname(@__FILE__)
 # source: http://www.liblas.org/samples/
@@ -38,7 +39,7 @@ function test_orignal()
 
         n = header.records_count
         pointtype = pointformat(header)
-        pointdata = Vector{pointtype}(n)
+        pointdata = Vector{pointtype}(undef, n)
         for i=1:n
             pointdata[i] = read_original(s, pointtype)
         end
@@ -53,7 +54,7 @@ function test_new()
 
         n = header.records_count
         pointtype = pointformat(header)
-        pointdata = Vector{pointtype}(n)
+        pointdata = Vector{pointtype}(undef, n)
         for i=1:n
             pointdata[i] = read(s, pointtype)
         end

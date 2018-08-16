@@ -1,3 +1,4 @@
+using Mmap
 
 function pointformat(header::LasHeader)
     id = header.data_format_id

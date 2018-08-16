@@ -124,7 +124,7 @@ end
 @test typeof(srsheader.variable_length_records[3].data) == LasIO.GeoAsciiParamsTag
 
 @test LasIO.epsg_code(header) === nothing
-@test LasIO.epsg_code(srsheader) === 32617
+@test LasIO.epsg_code(srsheader) === UInt16(32617)
 # set the SRS. Note: this will not change points, but merely set SRS-metadata.
 epsgheader = deepcopy(srsheader)
 LasIO.epsg_code!(epsgheader, 32633)  # set to WGS 84 / UTM zone 33N, not the actual SRS

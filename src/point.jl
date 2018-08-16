@@ -16,7 +16,7 @@ struct PointVector{T} <: AbstractArray{T,1}
         n = length(data) ÷ pointsize
 
         # IOBuffer takes (data, readable, writable)
-        new{T}(IOBuffer(data, true, false), n, pointsize)
+        new{T}(IOBuffer(data; read=true, write=false), n, pointsize)
     end
 end
 
