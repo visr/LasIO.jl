@@ -88,7 +88,7 @@ function Base.show(io::IO, header::LasHeader)
     if !isempty(header.variable_length_records)
         nrecords = min(10, size(header.variable_length_records, 1))
 
-        println(io, string("\tvariable_length_records = "))
+        println(io, string("\tvariable_length_records (max 10) = "))
         for vlr in header.variable_length_records[1:nrecords]
             println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
         end
@@ -139,7 +139,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     data_format_id = read(io, UInt8)
     data_record_length = read(io, UInt16)
     records_count = read(io, UInt32)
-    point_return_count = read!(io, zeros(UInt32, 5))
+    point_return_count = read!(io, Vector{UInt32}(undef, 5))
     x_scale = read(io, Float64)
     y_scale = read(io, Float64)
     z_scale = read(io, Float64)
