@@ -1,6 +1,6 @@
 using FileIO
 using LasIO
-using Base.Test
+using Test
 
 include("stream.jl")
 

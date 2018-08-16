@@ -1,6 +1,6 @@
 "Generate read (unpack) method for structs."
 function generate_read(T::Type)
-    fc = @compat fieldcount(T)
+    fc = fieldcount(T)
     types = [fieldtype(T, i) for i = 1:fc]
 
     # Create unpack function expression
