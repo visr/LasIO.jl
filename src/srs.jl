@@ -108,10 +108,10 @@ function epsg_code(header::LasHeader)
     end
     vlrs = header.variable_length_records
     ind = findfirst(x -> x.record_id == id_geokeydirectorytag, vlrs)
-    if ind == 0
-        return Nullable{Int}()
+    if ind === nothing
+        nothing
     else
-        Nullable{Int}(vlrs[ind].data.keys[3].value_offset)
+        vlrs[ind].data.keys[3].value_offset
     end
 end
 
@@ -143,8 +143,6 @@ function epsg_code!(header::LasHeader, epsg::Integer)
     header.data_offset = old_offset - old_vlrlength + new_vlrlength
     header
 end
-
-epsg_code!(header::LasHeader, epsg::Nullable{<:Integer}) = epsg_code!(header, get(epsg))
 
 function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
     if record_id == id_geokeydirectorytag

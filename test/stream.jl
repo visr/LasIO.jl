@@ -1,6 +1,6 @@
 using FileIO
 using LasIO
-using Base.Test
+using Test
 
 workdir = dirname(@__FILE__)
 # source: http://www.liblas.org/samples/
