@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2018-08-17
+### Fixed
+- Fixed all deprecation warnings in julia 0.7
+
+### Changed
+- Minimum supported release is now julia 0.7
+- `epsg_code` no longer returns a Nullable, but a `UInt16`, or `nothing` if not present
+
 ## [0.1.0] - 2018-08-15
 Final release with julia 0.6 support.
 ### Fixed
