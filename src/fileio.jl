@@ -25,7 +25,7 @@ function load(f::File{format"LAS"}; mmap=false)
 end
 
 # Load pipe separately since it can't be memory mapped
-function load(s::Pipe)
+function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
 
