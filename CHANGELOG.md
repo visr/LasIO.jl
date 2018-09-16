@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2018-09-16
+### Fixed
+- Fixed `load` for LAZ files by updating type signature
+
 ## [0.2.0] - 2018-08-17
 ### Fixed
 - Fixed all deprecation warnings in julia 0.7
