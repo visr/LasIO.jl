@@ -6,17 +6,26 @@ using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using StaticArrays
 
 export
 
     # Types
     LasHeader,
     LasVariableLengthRecord,
+    ExtendedLasVariableLengthRecord,
     LasPoint,
     LasPoint0,
     LasPoint1,
     LasPoint2,
     LasPoint3,
+    LasPoint4,
+    LasPoint5,
+    LasPoint6,
+    LasPoint7,
+    LasPoint8,
+    LasPoint9,
+    LasPoint10,
     PointVector,
 
     # Functions on LasHeader
@@ -49,12 +58,14 @@ export
     blue,
     RGB
 
+include("fixedstrings.jl")
+include("meta.jl")
 include("vlrs.jl")
 include("header.jl")
-include("meta.jl")
 include("point.jl")
 include("util.jl")
 include("fileio.jl")
+include("waveform.jl")
 include("srs.jl")
 
 function __init__()

@@ -1,15 +1,23 @@
 using Mmap
 
+pointformats = Dict(
+    0x00 => LasPoint0,
+    0x01 => LasPoint1,
+    0x02 => LasPoint2,
+    0x03 => LasPoint3,
+    0x04 => LasPoint4,
+    0x05 => LasPoint5,
+    0x06 => LasPoint6,
+    0x07 => LasPoint7,
+    0x08 => LasPoint8,
+    0x09 => LasPoint9,
+    0x10 => LasPoint10
+)
+
 function pointformat(header::LasHeader)
     id = header.data_format_id
-    if id == 0x00
-        return LasPoint0
-    elseif id == 0x01
-        return LasPoint1
-    elseif id == 0x02
-        return LasPoint2
-    elseif id == 0x03
-        return LasPoint3
+    if id in keys(pointformats)
+        return pointformats[id]
     else
         error("unsupported point format $(Int(id))")
     end
@@ -28,8 +36,8 @@ end
 function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
-
-    n = header.records_count
+    lv = VersionNumber(header.version_major, header.version_minor)
+    n = header.records_count_new
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
@@ -41,9 +49,30 @@ end
 function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
+    lv = VersionNumber(header.version_major, header.version_minor)
 
-    n = header.records_count
+    n = header.records_count_new
     pointtype = pointformat(header)
+    extra_bytes = header.data_record_length - sizeof(pointtype)
+
+    # Determine extra bytes
+    if extra_bytes != 0 && 4 in keys(header.variable_length_records)
+        ebs = header.variable_length_records[4].data  # extra_byte structures
+        total_size = sum([sizeof(eb.data_type) for eb in ebs])
+
+        if total_size > extra_bytes
+            # this renders this VLR invalid according to spec
+            warn("Extra bytes mismatch, skipping all extra bytes.")
+        else
+            # this is allowed according to spec
+            total_size < extra_bytes && warn("There are undocumented extra bytes!")
+
+            # generate new point type structure to read
+            newfields = [(Symbol(eb.name), eb.data_type) for eb in ebs]
+            pointtype = gen_append_struct(pointtype, newfields)
+            extra_bytes -= total_size
+        end
+    end
 
     if mmap
         pointsize = Int(header.data_record_length)
@@ -53,7 +82,21 @@ function load(s::Stream{format"LAS"}; mmap=false)
         pointdata = Vector{pointtype}(undef, n)
         for i=1:n
             pointdata[i] = read(s, pointtype)
+            extra_bytes > 0 && read(s, extra_bytes)  # skip extra bytes
         end
+    end
+
+    # Extended Variable Length Records for 1.3 and 1.4
+    if lv == v"1.3" && header.waveform_offset > 0
+        evlr = read(s, ExtendedLasVariableLengthRecord)
+        header.variable_length_records[evlr.record_id] = evlr
+    elseif lv == v"1.4" && header.n_evlr > 0
+        for i=1:header.n_evlr
+            evlr = read(s, ExtendedLasVariableLengthRecord)
+            header.variable_length_records[evlr.record_id] = evlr
+        end
+    else
+        nothing
     end
 
     header, pointdata
@@ -86,7 +129,7 @@ end
 
 function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
-    header_n = header.records_count
+    header_n = header.records_count_new
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
@@ -94,7 +137,6 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVect
     # write header
     write(s, magic(format"LAS"))
     write(s, header)
-
     # write points
     for p in pointdata
         write(s, p)

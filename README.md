@@ -5,7 +5,7 @@
 
 Julia package for reading and writing the LAS lidar format.
 
-This is a pure Julia alternative to [LibLAS.jl](https://github.com/visr/LibLAS.jl) or [Laszip.jl](https://github.com/joa-quim/Laszip.jl). Currently only LAS versions 1.1 - 1.3 and point formats 0 - 3 are supported. For LAZ support see below.
+This is a pure Julia alternative to [LibLAS.jl](https://github.com/visr/LibLAS.jl) or [Laszip.jl](https://github.com/joa-quim/Laszip.jl). Currently LAS versions 1.1 - 1.4 and point formats 0 - 10 are supported. For LAZ support see below.
 
 If the file fits into memory, it can be loaded using
 

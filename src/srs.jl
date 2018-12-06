@@ -25,26 +25,21 @@ struct GeoDoubleParamsTag
     double_params::Vector{Float64}
 end
 
-struct GeoAsciiParamsTag
-    ascii_params::String
-    nb::Int  # number of bytes
-    GeoAsciiParamsTag(s::AbstractString, nb::Integer) = new(ascii(s), Int(nb))
-end
-
 const id_geokeydirectorytag = UInt16(34735)
 const id_geodoubleparamstag = UInt16(34736)
 const id_geoasciiparamstag = UInt16(34737)
 
 "test whether a vlr is a GeoKeyDirectoryTag, GeoDoubleParamsTag or GeoAsciiParamsTag"
-is_srs(vlr::LasVariableLengthRecord) = vlr.record_id in (
+is_srs(vlr::Union{ExtendedLasVariableLengthRecord, LasVariableLengthRecord}) = vlr.record_id in (
     id_geokeydirectorytag,
     id_geodoubleparamstag,
     id_geoasciiparamstag)
+is_srs(::UInt16, vlr::Union{ExtendedLasVariableLengthRecord, LasVariableLengthRecord}) = is_srs(vlr)
+is_srs(pair::Pair{UInt16,Union{LasIO.ExtendedLasVariableLengthRecord, LasIO.LasVariableLengthRecord}}) = is_srs(pair.first, pair.second)
 
 # number of bytes
 Base.sizeof(data::GeoKeys) = 8 * Int(data.number_of_keys) + 8
 Base.sizeof(data::GeoDoubleParamsTag) = sizeof(data.double_params)
-Base.sizeof(data::GeoAsciiParamsTag) = data.nb
 
 "Construct a projection VLR based on an EPSG code"
 function LasVariableLengthRecord(header::LasHeader, srid::SRID)
@@ -81,7 +76,6 @@ function Base.write(io::IO, data::GeoKeys)
 end
 
 Base.write(io::IO, data::GeoDoubleParamsTag) = write(io, data.double_params)
-Base.write(io::IO, data::GeoAsciiParamsTag) = writestring(io, data.ascii_params, data.nb)
 
 "Create GeoKeys from EPSG code. Assumes CRS is projected and in meters."
 function GeoKeys(epsg::Integer)
@@ -107,11 +101,10 @@ function epsg_code(header::LasHeader)
         throw(ArgumentError("WKT format projection information not implemented"))
     end
     vlrs = header.variable_length_records
-    ind = findfirst(x -> x.record_id == id_geokeydirectorytag, vlrs)
-    if ind === nothing
+    if !(id_geokeydirectorytag in vlrs.keys)
         nothing
     else
-        vlrs[ind].data.keys[3].value_offset
+        vlrs[id_geokeydirectorytag].data.keys[3].value_offset
     end
 end
 
@@ -125,38 +118,23 @@ function epsg_code!(header::LasHeader, epsg::Integer)
     end
 
     # read old header metadata
-    old_vlrlength = header.n_vlr == 0 ? 0 : sum(sizeof, header.variable_length_records)
+    old_vlrlength = header.n_vlr == 0 ? 0 : sum(sizeof, values(header.variable_length_records))
     old_offset = header.data_offset
 
     # reconstruct VLRs
-    vlrs = LasVariableLengthRecord[]
-    srid = SRID(:epsg,epsg)
-    push!(vlrs, LasVariableLengthRecord(header, srid))
     # keep existing non-SRS VLRs intact
-    append!(vlrs, filter(!is_srs, header.variable_length_records))
+    vlrs = filter(!is_srs, header.variable_length_records)
+    srid = SRID(:epsg,epsg)
+    proj = LasVariableLengthRecord(header, srid)
+    vlrs[proj.record_id] = proj
 
     # update header
     header.variable_length_records = vlrs
     header.n_vlr = length(header.variable_length_records)
-    new_vlrlength = header.n_vlr == 0 ? 0 : sum(sizeof, header.variable_length_records)
+    new_vlrlength = header.n_vlr == 0 ? 0 : sum(sizeof, values(header.variable_length_records))
     # update offset to point data, assuming the VLRs come before the data, i.e. not extended VLR
     header.data_offset = old_offset - old_vlrlength + new_vlrlength
     header
-end
-
-function read_vlr_data(io::IO, record_id::Integer, nb::Integer)
-    if record_id == id_geokeydirectorytag
-        return read(io, GeoKeys)
-    elseif record_id == id_geodoubleparamstag
-        double_params = zeros(nb ÷ 8)
-        read!(io, double_params)
-        return GeoDoubleParamsTag(double_params)
-    elseif record_id == id_geoasciiparamstag
-        ascii_params = readstring(io, nb)
-        return GeoAsciiParamsTag(ascii_params, nb)
-    else
-        return read(io, nb)
-    end
 end
 
 function Base.read(io::IO, ::Type{GeoKeys})

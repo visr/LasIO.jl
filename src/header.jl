@@ -14,17 +14,26 @@ Backward compatibility with LAS 1.1 – LAS 1.3 when payloads consist of only le
 content
 =#
 
+# abstract type LasHeader ; end
+hsizes = Dict(
+    v"1.0"=>227,
+    v"1.1"=>227,
+    v"1.2"=>227,
+    v"1.3"=>235,
+    v"1.4"=>375
+    )
+
 mutable struct LasHeader
     file_source_id::UInt16
     global_encoding::UInt16
     guid_1::UInt32
     guid_2::UInt16
     guid_3::UInt16
-    guid_4::AbstractString
+    guid_4::FixedString{8}
     version_major::UInt8
     version_minor::UInt8
-    system_id::AbstractString
-    software_id::AbstractString
+    system_id::FixedString{32}
+    software_id::FixedString{32}
     creation_doy::UInt16
     creation_year::UInt16
     header_size::UInt16
@@ -33,7 +42,7 @@ mutable struct LasHeader
     data_format_id::UInt8
     data_record_length::UInt16
     records_count::UInt32
-    point_return_count::Vector{UInt32}
+    point_return_count::Vector{UInt32}  # 15
     x_scale::Float64
     y_scale::Float64
     z_scale::Float64
@@ -46,77 +55,37 @@ mutable struct LasHeader
     y_min::Float64
     z_max::Float64
     z_min::Float64
-    variable_length_records::Vector{LasVariableLengthRecord}
+    # ASPRS LAS 1.3
+    waveform_offset::UInt64
+    # ASPRS LAS 1.4
+    evlr_offset::UInt64
+    n_evlr::UInt64
+    records_count_new::UInt64
+    point_return_count_new::Vector{UInt64}  # 15
+
+    # VLRs
+    variable_length_records::Dict{UInt16, Union{LasVariableLengthRecord, ExtendedLasVariableLengthRecord}}
+
+    # Header can have extra bits
     user_defined_bytes::Vector{UInt8}
 end
 
 function Base.show(io::IO, header::LasHeader)
-    n = Int(header.records_count)
+    n = Int(header.records_count_new)
     println(io, "LasHeader with $n points.")
-    println(io, string("\tfile_source_id = ", header.file_source_id))
-    println(io, string("\tglobal_encoding = ", header.global_encoding))
-    println(io, string("\tguid_1 = ", header.guid_1))
-    println(io, string("\tguid_2 = ", header.guid_2))
-    println(io, string("\tguid_3 = ", header.guid_3))
-    println(io, string("\tguid_4 = ", header.guid_4))
-    println(io, string("\tversion_major = ", header.version_major))
-    println(io, string("\tversion_minor = ", header.version_minor))
-    println(io, string("\tsystem_id = ", header.system_id))
-    println(io, string("\tsoftware_id = ", header.software_id))
-    println(io, string("\tcreation_doy = ", header.creation_doy))
-    println(io, string("\tcreation_year = ", header.creation_year))
-    println(io, string("\theader_size = ", header.header_size))
-    println(io, string("\tdata_offset = ", header.data_offset))
-    println(io, string("\tn_vlr = ", header.n_vlr))
-    println(io, string("\tdata_format_id = ", header.data_format_id))
-    println(io, string("\tdata_record_length = ", header.data_record_length))
-    println(io, string("\trecords_count = ", header.records_count))
-    println(io, string("\tpoint_return_count = ", header.point_return_count))
-    println(io, string("\tx_scale = ", header.x_scale))
-    println(io, string("\ty_scale = ", header.y_scale))
-    println(io, string("\tz_scale = ", header.z_scale))
-    println(io, string("\tx_offset = ", header.x_offset))
-    println(io, string("\ty_offset = ", header.y_offset))
-    println(io, string("\tz_offset = ", header.z_offset))
-    println(io, string("\tx_max = ", header.x_max))
-    println(io, string("\tx_min = ", header.x_min))
-    println(io, string("\ty_max = ", header.y_max))
-    println(io, string("\ty_min = ", header.y_min))
-    println(io, string("\tz_max = ", header.z_max))
-    println(io, string("\tz_min = ", header.z_min))
+end
 
-    if !isempty(header.variable_length_records)
-        nrecords = min(10, size(header.variable_length_records, 1))
-
-        println(io, string("\tvariable_length_records (max 10) = "))
-        for vlr in header.variable_length_records[1:nrecords]
-            println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
+function showall(io::IO, h::LasHeader)
+    show(io, h)
+    for name in fieldnames(h)
+        if (name == :variable_length_records) || (name == :extended_variable_length_records)
+            println(io, string("\tvariable_length_records = "))
+            for (_, vlr) in h.variable_length_records
+                println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(vlr.record_length_after_header) bytes...)")
+            end
+        else
+            println(io, string("\t$name = $(getfield(h,name))"))
         end
-        println("\t\t...")
-    end
-end
-
-function readstring(io, nb::Integer)
-    bytes = read(io, nb)
-    # strip possible null bytes
-    lastchar = findlast(bytes .!= 0)
-    if lastchar == nothing
-        return ""
-    else
-        return String(bytes[1:lastchar])
-    end
-end
-
-function writestring(io, str::AbstractString, nb::Integer)
-    n = length(str)
-    npad = nb - n
-    if npad < 0
-        error("string too long")
-    elseif npad == 0
-        write(io, str)
-    else
-        writestr = string(str * "\0"^npad)
-        write(io, writestr)
     end
 end
 
@@ -126,11 +95,11 @@ function Base.read(io::IO, ::Type{LasHeader})
     guid_1 = read(io, UInt32)
     guid_2 = read(io, UInt16)
     guid_3 = read(io, UInt16)
-    guid_4 = readstring(io, 8)
+    guid_4 = read(io, FixedString{8})
     version_major = read(io, UInt8)
     version_minor = read(io, UInt8)
-    system_id = readstring(io, 32)
-    software_id = readstring(io, 32)
+    system_id = read(io, FixedString{32})
+    software_id = read(io, FixedString{32})
     creation_doy = read(io, UInt16)
     creation_year = read(io, UInt16)
     header_size = read(io, UInt16)
@@ -152,19 +121,34 @@ function Base.read(io::IO, ::Type{LasHeader})
     y_min = read(io, Float64)
     z_max = read(io, Float64)
     z_min = read(io, Float64)
-    lasversion = VersionNumber(version_major, version_minor)
-    if lasversion >= v"1.3"
-         # start of waveform data record (unsupported)
-        _ = read(io, UInt64)
-    end
-    vlrs = [read(io, LasVariableLengthRecord, false) for i=1:n_vlr]
 
-    # From here until the data_offset everything is read in
-    # as user_defined_bytes. To avoid a seek that we cannot do on STDIN,
+    # determine ASPRS format
+    lv = VersionNumber(version_major, version_minor)
+    # ASPRS LAS 1.3
+    waveform_offset = lv >= v"1.3" ? read(io, UInt64) : 0
+
+    # ASPRS LAS 1.4
+    evlr_offset = lv >= v"1.4" ? read(io, UInt64) : 0
+    n_evlr = lv >= v"1.4" ? read(io, UInt32) : 0
+    records_count_new = lv >= v"1.4" ? read(io, UInt64) : records_count
+    point_return_count_new = zeros(UInt64, 15)
+    if lv >= v"1.4"
+        point_return_count_new = read!(io, point_return_count_new)
+    end
+
+    # Header could be longer than standard. To avoid a seek that we cannot do on STDIN,
     # we calculate how much to read in.
-    vlrlength = n_vlr == 0 ? 0 : sum(sizeof, vlrs)
-    pos = header_size + vlrlength
-    user_defined_bytes = read(io, data_offset - pos)
+    header_extra_size = header_size - hsizes[lv]
+    _ = header_extra_size > 0 ? read(io, header_extra_size) : Vector{UInt8}()
+
+    vlrlist = [read(io, LasVariableLengthRecord) for _=1:n_vlr]
+    vlrs = Dict(v.record_id => v for v in vlrlist)
+
+    # Skip any data remaining
+    vlrsize = length(vlrlist) > 0 ? sum(sizeof, vlrlist) : 0
+    pos = header_size + vlrsize
+    vlr_extra_size = data_offset - pos
+    user_defined_bytes = vlr_extra_size > 0 ? read(io, vlr_extra_size) : Vector{UInt8}()
 
     # put it all in a type
     header = LasHeader(
@@ -199,6 +183,11 @@ function Base.read(io::IO, ::Type{LasHeader})
         y_min,
         z_max,
         z_min,
+        waveform_offset,
+        evlr_offset,
+        n_evlr,
+        records_count_new,
+        point_return_count_new,
         vlrs,
         user_defined_bytes
     )
@@ -210,16 +199,16 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.guid_1)
     write(io, h.guid_2)
     write(io, h.guid_3)
-    writestring(io, h.guid_4, 8)
+    write(io, h.guid_4)
     write(io, h.version_major)
     write(io, h.version_minor)
-    writestring(io, h.system_id, 32)
-    writestring(io, h.software_id, 32)
+    write(io, h.system_id)
+    write(io, h.software_id)
     write(io, h.creation_doy)
     write(io, h.creation_year)
     write(io, h.header_size)
     write(io, h.data_offset)
-    @assert length(h.variable_length_records) == h.n_vlr
+    @assert length(h.variable_length_records) == h.n_vlr + h.n_evlr
     write(io, h.n_vlr)
     write(io, h.data_format_id)
     write(io, h.data_record_length)
@@ -243,10 +232,15 @@ function Base.write(io::IO, h::LasHeader)
         # start of waveform data record (unsupported)
         write(io, UInt64(0))
     end
-    for i in 1:h.n_vlr
-        write(io, h.variable_length_records[i])
+
+    # Write VLRS
+    for k in sort(collect(keys(h.variable_length_records)))
+        vlr = h.variable_length_records[k]
+        typeof(vlr) == LasVariableLengthRecord && write(io, vlr)
     end
+
     write(io, h.user_defined_bytes)
+
     # note that for LAS 1.4 a few new parts need to be written
     # possibly introduce typed headers like the points
     nothing
@@ -265,4 +259,8 @@ function is_wkt(h::LasHeader)
         throw(DomainError("WKT bit must be true for point types higher than 5"))
     end
     wkit_bit
+end
+
+function waveform_internal(h::LasHeader)
+    isodd((h.global_encoding >>> 1) & 0x0001)
 end
