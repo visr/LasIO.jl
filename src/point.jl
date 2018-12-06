@@ -287,7 +287,7 @@ function Base.show(io::IO, p::LasPoint)
     println(io, "LasPoint(x=$x, y=$y, z=$z, classification=$cl)")
 end
 
-function Base.showall(io::IO, h::LasPoint)
+function showall(io::IO, h::LasPoint)
     for name in fieldnames(h)
         println(io, string("\t$name = $(getfield(h,name))"))
     end

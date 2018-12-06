@@ -75,7 +75,7 @@ function Base.show(io::IO, header::LasHeader)
     println(io, "LasHeader with $n points.")
 end
 
-function Base.showall(io::IO, h::LasHeader)
+function showall(io::IO, h::LasHeader)
     show(io, h)
     for name in fieldnames(h)
         if (name == :variable_length_records) || (name == :extended_variable_length_records)
@@ -131,7 +131,10 @@ function Base.read(io::IO, ::Type{LasHeader})
     evlr_offset = lv >= v"1.4" ? read(io, UInt64) : 0
     n_evlr = lv >= v"1.4" ? read(io, UInt32) : 0
     records_count_new = lv >= v"1.4" ? read(io, UInt64) : records_count
-    point_return_count_new = lv >= v"1.4" ? read!(io, Vector{UInt64}(15)) : Vector{UInt64}(15)
+    point_return_count_new = zeros(UInt64, 15)
+    if lv >= v"1.4"
+        point_return_count_new = read!(io, point_return_count_new)
+    end
 
     # Header could be longer than standard. To avoid a seek that we cannot do on STDIN,
     # we calculate how much to read in.
