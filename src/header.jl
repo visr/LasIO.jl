@@ -25,7 +25,7 @@ mutable struct LasHeader
     version_minor::UInt8
     system_id::AbstractString
     software_id::AbstractString
-    creation_doy::UInt16
+    creation_dayofyear::UInt16
     creation_year::UInt16
     header_size::UInt16
     data_offset::UInt32
@@ -48,6 +48,15 @@ mutable struct LasHeader
     z_min::Float64
     variable_length_records::Vector{LasVariableLengthRecord}
     user_defined_bytes::Vector{UInt8}
+end
+
+function Base.getproperty(h::LasHeader, s::Symbol)
+    if s == :creation_doy
+        @warn "$s is deprecated, use :creation_dayofyear instead."
+        return getfield(h, :creation_dayofyear)
+    else
+        return getfield(h, s)
+    end
 end
 
 function Base.show(io::IO, header::LasHeader)
