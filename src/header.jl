@@ -72,7 +72,7 @@ function Base.show(io::IO, header::LasHeader)
     println(io, string("\tversion_minor = ", header.version_minor))
     println(io, string("\tsystem_id = ", header.system_id))
     println(io, string("\tsoftware_id = ", header.software_id))
-    println(io, string("\tcreation_doy = ", header.creation_doy))
+    println(io, string("\creation_dayofyear = ", header.creation_dayofyear))
     println(io, string("\tcreation_year = ", header.creation_year))
     println(io, string("\theader_size = ", header.header_size))
     println(io, string("\tdata_offset = ", header.data_offset))
@@ -140,7 +140,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     version_minor = read(io, UInt8)
     system_id = readstring(io, 32)
     software_id = readstring(io, 32)
-    creation_doy = read(io, UInt16)
+    creation_dayofyear = read(io, UInt16)
     creation_year = read(io, UInt16)
     header_size = read(io, UInt16)
     data_offset = read(io, UInt32)
@@ -187,7 +187,7 @@ function Base.read(io::IO, ::Type{LasHeader})
         version_minor,
         system_id,
         software_id,
-        creation_doy,
+        creation_dayofyear,
         creation_year,
         header_size,
         data_offset,
@@ -224,7 +224,7 @@ function Base.write(io::IO, h::LasHeader)
     write(io, h.version_minor)
     writestring(io, h.system_id, 32)
     writestring(io, h.software_id, 32)
-    write(io, h.creation_doy)
+    write(io, h.creation_dayofyear)
     write(io, h.creation_year)
     write(io, h.header_size)
     write(io, h.data_offset)
