@@ -52,7 +52,7 @@ end
 
 function Base.getproperty(h::LasHeader, s::Symbol)
     if s == :creation_doy
-        @warn "$s is deprecated, use :creation_dayofyear instead."
+        Base.depwarn("LasHeader.creation_doy is deprecated, use LasHeader.creation_dayofyear", :getproperty)
         return getfield(h, :creation_dayofyear)
     else
         return getfield(h, s)
