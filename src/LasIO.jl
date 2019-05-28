@@ -22,6 +22,7 @@ export
     # Functions on LasHeader
     update!,
     pointformat,
+    boundingbox,
 
     # Functions on LasPoint
     return_number,

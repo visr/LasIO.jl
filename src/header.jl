@@ -275,3 +275,7 @@ function is_wkt(h::LasHeader)
     end
     wkit_bit
 end
+
+"Retrieve the bounding box from a LasHeader as a NamedTuple"
+boundingbox(h::LasHeader) = (xmin = h.x_min, ymin = h.y_min, zmin = h.z_min,
+    xmax = h.x_max, ymax = h.y_max, zmax = h.z_max)
