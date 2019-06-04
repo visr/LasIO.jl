@@ -136,5 +136,5 @@ save(srsfile_out, srsheader, srspoints)
 @test hash(read(srsfile)) == hash(read(srsfile_out))
 rm(srsfile_out)
 
-@test boundingbox(header) === (x_min = 1.44e6, y_min = 375000.03, z_min = 832.1800000000001,
-    x_max = 1.44499996e6, y_max = 379999.99, z_max = 972.6700000000001)
+@test boundingbox(header) === (xmin = 1.44e6, ymin = 375000.03, zmin = 832.1800000000001,
+    xmax = 1.44499996e6, ymax = 379999.99, zmax = 972.6700000000001)
