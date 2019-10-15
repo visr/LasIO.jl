@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2018-10-15
+### Changed
+- Minimum supported release is now julia 1.0
+
 ## [0.2.1] - 2018-09-16
 ### Fixed
 - Fixed `load` for LAZ files by updating type signature
