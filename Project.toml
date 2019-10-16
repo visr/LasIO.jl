@@ -11,11 +11,11 @@ GeometryTypes = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
 Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [compat]
-ColorTypes = "≥ 0.7.0"
-FileIO = "≥ 1.0.0"
-FixedPointNumbers = "≥ 0.6.0"
-GeometryTypes = "≥ 0.6.0"
-julia = "≥ 1.0.0"
+ColorTypes = "0.7, 0.8"
+FileIO = "1"
+FixedPointNumbers = "0.5, 0.6"
+GeometryTypes = "0.6, 0.7"
+julia = "1"
 
 [extras]
 Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
