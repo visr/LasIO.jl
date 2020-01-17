@@ -5,7 +5,7 @@
 
 Julia package for reading and writing the LAS lidar format.
 
-This is a pure Julia alternative to [LibLAS.jl](https://github.com/visr/LibLAS.jl) or [Laszip.jl](https://github.com/joa-quim/Laszip.jl). Currently only LAS versions 1.1 - 1.3 and point formats 0 - 3 are supported. For LAZ support see below.
+This is a pure Julia alternative to [LibLAS.jl](https://github.com/visr/LibLAS.jl), [Laszip.jl](https://github.com/joa-quim/Laszip.jl) or [LazIO](https://github.com/evetion/LazIO.jl). Currently only LAS versions 1.1 - 1.3 and point formats 0 - 3 are supported. For LAZ support see below.
 
 If the file fits into memory, it can be loaded using
 
@@ -28,11 +28,11 @@ where `points` is now a memory mapped `PointVector{LasPoint3}` which behaves in 
 See `test/runtests.jl` for other usages.
 
 ## LAZ support
-The compressed LAZ format is supported, but requires the user to make sure the `laszip` executable can be found in the PATH. LAZ files are piped through `laszip` to provide reading and writing capability. `laszip` is not distributed with this package. One way to get it is to download `LAStools` from https://rapidlasso.com/. The LAStools ZIP file already contains `laszip.exe` for Windows, for Linux or Mac it needs to be compiled first. When this is done this should work just like with LAS:
+We advise to use [LazIO](https://github.com/evetion/LazIO.jl), which works out of the box and is compatible with LasIO.
+
+The compressed LAZ format is supported by LasIO itself, but requires the user to make sure the `laszip` executable can be found in the PATH. LAZ files are piped through `laszip` to provide reading and writing capability. `laszip` is not distributed with this package. One way to get it is to download `LAStools` from https://rapidlasso.com/. The LAStools ZIP file already contains `laszip.exe` for Windows, for Linux or Mac it needs to be compiled first. When this is done this should work just like with LAS:
 
 ```julia
 using FileIO, LasIO
 header, points = load("test.laz")
 ```
-
-Besides piping through `laszip`, more complete LAZ support is in the works at https://github.com/evetion/LazIO.jl.
