@@ -23,7 +23,6 @@ export
     update!,
     pointformat,
     boundingbox,
-    scaled_boundingbox,
 
     # Functions on LasPoint
     return_number,

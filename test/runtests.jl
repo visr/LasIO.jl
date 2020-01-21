@@ -138,5 +138,4 @@ rm(srsfile_out)
 
 @test boundingbox(header) === (xmin = 1.44e6, ymin = 375000.03, zmin = 832.1800000000001,
     xmax = 1.44499996e6, ymax = 379999.99, zmax = 972.6700000000001)
-
-@test scaled_boundingbox(header) === (xmin = 1.44e8, ymin = 3.7500003e7, zmin = 83218.0, xmax = 1.44499996e8, ymax = 3.7999999e7, zmax = 97267.0)
+@test LasIO.boundingbox_unscaled(header) === (xmin = Int32(144000000), ymin = Int32(37500003), zmin = Int32(83218), xmax = Int32(144499996), ymax = Int32(37999999), zmax = Int32(97267))
