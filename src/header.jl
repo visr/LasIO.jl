@@ -280,11 +280,12 @@ end
 boundingbox(h::LasHeader) = (xmin = h.x_min, ymin = h.y_min, zmin = h.z_min,
     xmax = h.x_max, ymax = h.y_max, zmax = h.z_max)
 
-scaled_boundingbox(h::LasHeader) = (
-    xmin = (h.x_min - h.x_offset) / h.x_scale,
-    ymin = (h.y_min - h.y_offset) / h.y_scale,
-    zmin = (h.z_min - h.z_offset) / h.z_scale,
-    xmax = (h.x_max - h.x_offset) / h.x_scale,
-    ymax = (h.y_max - h.y_offset) / h.y_scale,
-    zmax = (h.z_max - h.z_offset) / h.z_scale
+"Get the boundingbox in the same stored integer form as the raw point coordinates"
+boundingbox_unscaled(h::LasHeader) = (
+    xmin = round(Int32, (h.x_min - h.x_offset) / h.x_scale),
+    ymin = round(Int32, (h.y_min - h.y_offset) / h.y_scale),
+    zmin = round(Int32, (h.z_min - h.z_offset) / h.z_scale),
+    xmax = round(Int32, (h.x_max - h.x_offset) / h.x_scale),
+    ymax = round(Int32, (h.y_max - h.y_offset) / h.y_scale),
+    zmax = round(Int32, (h.z_max - h.z_offset) / h.z_scale)
 )
