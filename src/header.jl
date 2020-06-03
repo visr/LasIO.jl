@@ -1,3 +1,4 @@
+using Printf
 # the header implemented based on LAS 1.2
 # TODO: check compatibility other LAS versions
 
@@ -87,12 +88,12 @@ function Base.show(io::IO, header::LasHeader)
     println(io, string("\tx_offset = ", header.x_offset))
     println(io, string("\ty_offset = ", header.y_offset))
     println(io, string("\tz_offset = ", header.z_offset))
-    println(io, string("\tx_max = ", header.x_max))
-    println(io, string("\tx_min = ", header.x_min))
-    println(io, string("\ty_max = ", header.y_max))
-    println(io, string("\ty_min = ", header.y_min))
-    println(io, string("\tz_max = ", header.z_max))
-    println(io, string("\tz_min = ", header.z_min))
+    println(io, @sprintf "\tx_max = %.7f" header.x_max)
+    println(io, @sprintf "\tx_min = %.7f" header.x_min)
+    println(io, @sprintf "\ty_max = %.7f" header.y_max)
+    println(io, @sprintf "\ty_min = %.7f" header.y_min)
+    println(io, @sprintf "\tz_max = %.7f" header.z_max)
+    println(io, @sprintf "\tz_min = %.7f" header.z_min)
 
     if !isempty(header.variable_length_records)
         nrecords = min(10, size(header.variable_length_records, 1))
