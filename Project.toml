@@ -1,9 +1,9 @@
 name = "LasIO"
-uuid = "570499db-eae3-5eb6-bdd5-a5326f375e68"
+uuid = "73f23da9-1916-45be-95ff-8b812502714e"
 keywords = ["LAS", "lidar", "IO"]
 license = "MIT"
 desc = "Read and write LAS lidar point cloud files"
-version = "0.3.6"
+version = "0.4.0"
 
 [deps]
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
