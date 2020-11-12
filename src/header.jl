@@ -47,6 +47,11 @@ mutable struct LasHeader
     y_min::Float64
     z_max::Float64
     z_min::Float64
+    start_of_waveform_data_packet_record::UInt64
+    start_of_first_extended_variable_length_record::UInt64
+    number_of_extended_variable_length_records::UInt32
+    extended_number_of_point_records::UInt64
+    extended_number_of_points_by_return::Vector{UInt64}
     variable_length_records::Vector{LasVariableLengthRecord}
     user_defined_bytes::Vector{UInt8}
 end
@@ -61,8 +66,8 @@ function Base.getproperty(h::LasHeader, s::Symbol)
 end
 
 function Base.show(io::IO, header::LasHeader)
-    n = Int(header.records_count)
-    println(io, "LasHeader with $n points.")
+    n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
+    println(io, "LasHeader with $(n) points.")
     println(io, string("\tfile_source_id = ", header.file_source_id))
     println(io, string("\tglobal_encoding = ", header.global_encoding))
     println(io, string("\tguid_1 = ", header.guid_1))
@@ -81,7 +86,7 @@ function Base.show(io::IO, header::LasHeader)
     println(io, string("\tdata_format_id = ", header.data_format_id))
     println(io, string("\tdata_record_length = ", header.data_record_length))
     println(io, string("\trecords_count = ", header.records_count))
-    println(io, string("\tpoint_return_count = ", header.point_return_count))
+    println(io, string("\tpoint_return_count = ", [Int(i) for i in header.point_return_count]))
     println(io, string("\tx_scale = ", header.x_scale))
     println(io, string("\ty_scale = ", header.y_scale))
     println(io, string("\tz_scale = ", header.z_scale))
@@ -95,10 +100,15 @@ function Base.show(io::IO, header::LasHeader)
     println(io, @sprintf "\tz_max = %.7f" header.z_max)
     println(io, @sprintf "\tz_min = %.7f" header.z_min)
 
+    if header.version_minor > 3
+        println(io, string("\tnumber_of_extended_variable_length_records = ", header.number_of_extended_variable_length_records))
+        println(io, string("\textended_number_of_point_records = ", header.extended_number_of_point_records))
+        println(io, string("\textended_number_of_points_by_return = ", [Int(i) for i in header.extended_number_of_points_by_return]))
+    end
     if !isempty(header.variable_length_records)
         nrecords = min(10, size(header.variable_length_records, 1))
 
-        println(io, string("\tvariable_length_records (max 10) = "))
+        println(io, string("\tvariable_length_records (showing first $(nrecords)/$(size(header.variable_length_records, 1))) = "))
         for vlr in header.variable_length_records[1:nrecords]
             println(io, "\t\t($(vlr.user_id), $(vlr.record_id)) => ($(vlr.description), $(sizeof(vlr.data)) bytes...)")
         end
@@ -163,10 +173,21 @@ function Base.read(io::IO, ::Type{LasHeader})
     z_max = read(io, Float64)
     z_min = read(io, Float64)
     lasversion = VersionNumber(version_major, version_minor)
+    start_of_waveform_data_packet_record = UInt64(0)
+    start_of_first_extended_variable_length_record = UInt64(0)
+    number_of_extended_variable_length_records = UInt32(0)
+    extended_number_of_point_records = UInt64(0)
+    extended_number_of_points_by_return = Vector{UInt32}(undef, 15)
+
     if lasversion >= v"1.3"
-         # start of waveform data record (unsupported)
-        _ = read(io, UInt64)
+        # start of waveform data record (unsupported)
+        start_of_waveform_data_packet_record = read(io, UInt64)
+        start_of_first_extended_variable_length_record = read(io, UInt64)
+        number_of_extended_variable_length_records = read(io, UInt32)
+        extended_number_of_point_records = read(io, UInt64) # this is a UInt64 which is different from records_count which is UInt32
+        extended_number_of_points_by_return = read!(io, Vector{UInt64}(undef, 15))
     end
+
     vlrs = [read(io, LasVariableLengthRecord, false) for i=1:n_vlr]
 
     # From here until the data_offset everything is read in
@@ -209,8 +230,13 @@ function Base.read(io::IO, ::Type{LasHeader})
         y_min,
         z_max,
         z_min,
+        start_of_waveform_data_packet_record,
+        start_of_first_extended_variable_length_record,
+        number_of_extended_variable_length_records,
+        extended_number_of_point_records,
+        extended_number_of_points_by_return,
         vlrs,
-        user_defined_bytes
+        user_defined_bytes,
     )
 end
 
@@ -251,7 +277,11 @@ function Base.write(io::IO, h::LasHeader)
     lasversion = VersionNumber(h.version_major, h.version_minor)
     if lasversion >= v"1.3"
         # start of waveform data record (unsupported)
-        write(io, UInt64(0))
+        write(io, h.start_of_waveform_data_packet_record) # start_of_waveform_data_packet_record
+        write(io, h.start_of_first_extended_variable_length_record) # start_of_first_extended_variable_length_record
+        write(io, h.number_of_extended_variable_length_records) # number_of_extended_variable_length_records
+        write(io, h.extended_number_of_point_records)  # extended_number_of_point_records
+        write(io, h.extended_number_of_points_by_return) # extended_number_of_points_by_return
     end
     for i in 1:h.n_vlr
         write(io, h.variable_length_records[i])

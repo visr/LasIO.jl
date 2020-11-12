@@ -10,6 +10,12 @@ function pointformat(header::LasHeader)
         return LasPoint2
     elseif id == 0x03
         return LasPoint3
+    elseif id == 0x06
+        return LasPoint6
+    elseif id == 0x07
+        return LasPoint7
+    elseif id == 0x08
+        return LasPoint8
     else
         error("unsupported point format $(Int(id))")
     end
@@ -29,7 +35,7 @@ function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
 
-    n = header.records_count
+    n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
@@ -41,8 +47,7 @@ end
 function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
-
-    n = header.records_count
+    n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     pointtype = pointformat(header)
 
     if mmap
@@ -62,7 +67,9 @@ end
 function load(f::File{format"LAZ"})
     # read las from laszip, which decompresses to stdout
     open(`laszip -olas -stdout -i $(filename(f))`) do s
-        load(s)
+        h,p = load(s)
+        read(s)
+        return h, p
     end
 end
 
@@ -86,9 +93,9 @@ end
 
 function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
-    header_n = header.records_count
+    header_n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     n = length(pointdata)
-    msg = "number of records in header ($header_n) does not match data length ($n)"
+    msg = "Number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
 
     # write header
@@ -113,7 +120,7 @@ end
 # but it speeds up a lot when the result is piped to laszip.
 function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
-    header_n = header.records_count
+    header_n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
@@ -125,7 +132,7 @@ function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint}
     # 2048 points seemed to be an optimum for the libLAS_1.2.las testfile
     npoints_buffered = 2048
     bufsize = header.data_record_length * npoints_buffered
-    buf = IOBuffer(bufsize)
+    buf = IOBuffer(sizehint=bufsize)
     # write points
     for (i, p) in enumerate(pointdata)
         write(buf, p)
