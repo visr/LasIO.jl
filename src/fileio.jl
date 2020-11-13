@@ -34,8 +34,9 @@ end
 function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
-
     n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
+    @info "Reading $(n) points."
+
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
@@ -48,8 +49,9 @@ function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
     n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
-    pointtype = pointformat(header)
+    @info "Reading $(n) points."
 
+    pointtype = pointformat(header)
     if mmap
         pointsize = Int(header.data_record_length)
         pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
@@ -96,6 +98,8 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVect
     header_n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     n = length(pointdata)
     msg = "Number of records in header ($header_n) does not match data length ($n)"
+    @info "Writing $(n) points."
+
     @assert header_n == n msg
 
     # write header
@@ -124,6 +128,7 @@ function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint}
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
+    @info "Writing $(n) points."
 
     # write header
     write(s, magic(format"LAS"))
