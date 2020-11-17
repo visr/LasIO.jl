@@ -1,11 +1,13 @@
 module LasIO
 
+using Libdl
 using Base.Meta
 using Dates
 using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
+using LASzip_jll
 
 export
 
@@ -13,6 +15,8 @@ export
     LasHeader,
     LasVariableLengthRecord,
     LasPoint,
+    LasPoint_0_5,
+    LasPoint_6_10,
     LasPoint0,
     LasPoint1,
     LasPoint2,

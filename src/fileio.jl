@@ -10,11 +10,19 @@ function pointformat(header::LasHeader)
         return LasPoint2
     elseif id == 0x03
         return LasPoint3
+    elseif id == 0x04
+        return LasPoint3
+    elseif id == 0x05
+        return LasPoint3
     elseif id == 0x06
         return LasPoint6
     elseif id == 0x07
         return LasPoint7
     elseif id == 0x08
+        return LasPoint8
+    elseif id == 0x09
+        return LasPoint8
+    elseif id == 0x0a
         return LasPoint8
     else
         error("unsupported point format $(Int(id))")
@@ -40,6 +48,7 @@ function load(s::Base.AbstractPipe)
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
+        i%1000000 == 0 && @info("Read $(i)/$(n) points")
         pointdata[i] = read(s, pointtype)
     end
     header, pointdata
@@ -59,6 +68,7 @@ function load(s::Stream{format"LAS"}; mmap=false)
     else
         pointdata = Vector{pointtype}(undef, n)
         for i=1:n
+            i%1000000 == 0 && @info("Read $(i)/$(n) points")
             pointdata[i] = read(s, pointtype)
         end
     end
