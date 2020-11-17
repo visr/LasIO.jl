@@ -1,5 +1,15 @@
 using Mmap
 
+function get_laszip_executable_path()
+    if Sys.iswindows()
+        return joinpath(dirname(@__DIR__), "resources", "laszip.exe")
+    elseif Sys.islinux()
+        return joinpath(dirname(@__DIR__), "resources", "laszip")
+    else
+        error("LasIO  with ZIP functionality is only suported for windows and linux!")
+    end
+end
+
 function pointformat(header::LasHeader)
     id = header.data_format_id
     if id == 0x00
@@ -78,7 +88,7 @@ end
 
 function load(f::File{format"LAZ"})
     # read las from laszip, which decompresses to stdout
-    open(`laszip -olas -stdout -i $(filename(f))`) do s
+    open(`$(get_laszip_executable_path()) -olas -stdout -i $(filename(f))`) do s
         h,p = load(s)
         read(s)
         return h, p
@@ -124,7 +134,7 @@ end
 
 function save(f::File{format"LAZ"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # pipes las to laszip to write laz
-    open(`laszip -olaz -stdin -o $(filename(f))`, "w") do s
+    open(`$(get_laszip_executable_path()) -olaz -stdin -o $(filename(f))`, "w") do s
         savebuf(s, header, pointdata)
     end
 end

@@ -63,7 +63,12 @@ export
     red,
     green,
     blue,
-    RGB
+    RGB,
+    laszip
+
+
+const laszip = replace(liblaszip, "_api" => "")
+@debug "Using laszip library at $liblaszip"
 
 include("vlrs.jl")
 include("header.jl")
