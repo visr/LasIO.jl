@@ -11,8 +11,6 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 GeometryTypes = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
-LASzip_jll = "8372b9c3-1e34-5cc3-bfab-1a98e101de11"
-Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 

@@ -1,13 +1,11 @@
 module LasIO
 
-using Libdl
 using Base.Meta
 using Dates
 using FileIO
 using FixedPointNumbers
 using ColorTypes
 using GeometryTypes # for conversion
-using LASzip_jll
 
 export
 
@@ -63,12 +61,7 @@ export
     red,
     green,
     blue,
-    RGB,
-    laszip
-
-
-const laszip = replace(liblaszip, "_api" => "")
-@debug "Using laszip library at $liblaszip"
+    RGB
 
 include("vlrs.jl")
 include("header.jl")
