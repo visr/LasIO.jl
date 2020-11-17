@@ -11,9 +11,9 @@ function pointformat(header::LasHeader)
     elseif id == 0x03
         return LasPoint3
     elseif id == 0x04
-        return LasPoint3
+        return LasPoint4
     elseif id == 0x05
-        return LasPoint3
+        return LasPoint5
     elseif id == 0x06
         return LasPoint6
     elseif id == 0x07
@@ -21,9 +21,9 @@ function pointformat(header::LasHeader)
     elseif id == 0x08
         return LasPoint8
     elseif id == 0x09
-        return LasPoint8
+        return LasPoint9
     elseif id == 0x0a
-        return LasPoint8
+        return LasPoint10
     else
         error("unsupported point format $(Int(id))")
     end
@@ -43,7 +43,7 @@ function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
     n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
-    @info "Reading $(n) points."
+    @info "Reading $(n) '$(pointtype)' points"
 
     pointtype = pointformat(header)
     pointdata = Vector{pointtype}(undef, n)
@@ -58,9 +58,9 @@ function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
     n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
-    @info "Reading $(n) points."
 
     pointtype = pointformat(header)
+    @info "Reading $(n) '$(pointtype)' points"
     if mmap
         pointsize = Int(header.data_record_length)
         pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
@@ -108,7 +108,7 @@ function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVect
     header_n = header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
     n = length(pointdata)
     msg = "Number of records in header ($header_n) does not match data length ($n)"
-    @info "Writing $(n) points."
+    @info "Writing $(n) '$(typeof(pointdata[1]))' points."
 
     @assert header_n == n msg
 
@@ -138,7 +138,7 @@ function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint}
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
-    @info "Writing $(n) points."
+    @info "Writing $(n) '$(typeof(pointdata[1]))' points (with buffer)."
 
     # write header
     write(s, magic(format"LAS"))

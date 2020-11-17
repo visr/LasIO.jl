@@ -177,7 +177,7 @@ function Base.read(io::IO, ::Type{LasHeader})
     start_of_first_extended_variable_length_record = UInt64(0)
     number_of_extended_variable_length_records = UInt32(0)
     extended_number_of_point_records = UInt64(0)
-    extended_number_of_points_by_return = Vector{UInt32}(undef, 15)
+    extended_number_of_points_by_return = fill(UInt32(0), 15)
 
     if lasversion >= v"1.3"
         # start of waveform data record (unsupported)

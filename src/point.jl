@@ -153,7 +153,7 @@ Base.size(::Type{LasPoint4}) = UInt16(57)
     wave_y_t::Float32
     wave_z_t::Float32
 end
-Base.size(::Type{LasPoint5}) = UInt16(65)
+Base.size(::Type{LasPoint5}) = UInt16(63)
 
 "ASPRS LAS point data record format 6"
 @gen_io struct LasPoint6 <: LasPoint_6_10
@@ -162,7 +162,7 @@ Base.size(::Type{LasPoint5}) = UInt16(65)
     z::Int32
     intensity::UInt16
     flag_byte_1::UInt8  # return number (4 bits) & number of returns (4 bits)
-    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
     classification::UInt8
     user_data::UInt8
     scan_angle::Int16
@@ -178,7 +178,7 @@ Base.size(::Type{LasPoint6}) = UInt16(30)
     z::Int32
     intensity::UInt16
     flag_byte_1::UInt8  # return number (4 bits) & number of returns (4 bits)
-    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
     classification::UInt8
     user_data::UInt8
     scan_angle::Int16
@@ -197,7 +197,7 @@ Base.size(::Type{LasPoint7}) = UInt16(36)
     z::Int32
     intensity::UInt16
     flag_byte_1::UInt8  # return number (4 bits) & number of returns (4 bits)
-    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
     classification::UInt8
     user_data::UInt8
     scan_angle::Int16
@@ -217,7 +217,7 @@ Base.size(::Type{LasPoint8}) = UInt16(38)
     z::Int32
     intensity::UInt16
     flag_byte_1::UInt8  # return number (4 bits) & number of returns (4 bits)
-    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
     classification::UInt8
     user_data::UInt8
     scan_angle::Int16
@@ -240,7 +240,7 @@ Base.size(::Type{LasPoint9}) = UInt16(59)
     z::Int32
     intensity::UInt16
     flag_byte_1::UInt8  # return number (4 bits) & number of returns (4 bits)
-    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+    flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
     classification::UInt8
     user_data::UInt8
     scan_angle::Int16
@@ -380,7 +380,7 @@ end
 classification(p::LasPoint_0_5) = (p.raw_classification & 0b00011111)
 classification(p::LasPoint_6_10) = p.classification
 
-# LasPoint_6_10 : flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag
+# LasPoint_6_10 : flag_byte_2::UInt8 # classification flags, scanner channel, scan direction flag, edge of flight line
 "If true, the point was not created from lidar collection"
 synthetic(p::LasPoint_0_5) = Bool((p.raw_classification & 0b00100000) >> 5)
 synthetic(p::LasPoint_6_10) = Bool((p.flag_byte_2 & 0b00000001))
