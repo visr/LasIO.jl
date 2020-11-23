@@ -29,6 +29,10 @@ function update!(h::LasHeader, pvec::Vector{T}) where T <: LasPoint
     h.x_max = x_max
     h.y_max = y_max
     h.z_max = z_max
-    h.records_count = length(pvec)
+    if h.records_count == 0 && h.version_minor > 3
+        h.extended_number_of_point_records = length(pvec)
+    else
+        h.records_count = length(pvec)
+    end
     nothing
 end

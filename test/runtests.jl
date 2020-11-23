@@ -1,7 +1,10 @@
 using FileIO
 using LasIO
 using Test
+using FixedPointNumbers
+using Dates
 
+include("read_write_laspoints.jl")
 include("stream.jl")
 
 workdir = dirname(@__FILE__)

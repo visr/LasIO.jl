@@ -1,5 +1,17 @@
 using Mmap
 
+function get_laszip_executable_path()
+    if Sys.iswindows()
+        return joinpath(dirname(@__DIR__), "resources", "laszip.exe")
+    else # point to the linux build of the executable
+        return joinpath(dirname(@__DIR__), "resources", "laszip")
+    end
+end
+
+function get_record_count(header::LasHeader)
+    return header.extended_number_of_point_records > 0 ? Int(header.extended_number_of_point_records) : Int(header.records_count)
+end
+
 function pointformat(header::LasHeader)
     id = header.data_format_id
     if id == 0x00
@@ -10,6 +22,20 @@ function pointformat(header::LasHeader)
         return LasPoint2
     elseif id == 0x03
         return LasPoint3
+    elseif id == 0x04
+        return LasPoint4
+    elseif id == 0x05
+        return LasPoint5
+    elseif id == 0x06
+        return LasPoint6
+    elseif id == 0x07
+        return LasPoint7
+    elseif id == 0x08
+        return LasPoint8
+    elseif id == 0x09
+        return LasPoint9
+    elseif id == 0x0a
+        return LasPoint10
     else
         error("unsupported point format $(Int(id))")
     end
@@ -28,11 +54,13 @@ end
 function load(s::Base.AbstractPipe)
     skiplasf(s)
     header = read(s, LasHeader)
-
-    n = header.records_count
+    n = get_record_count(header)
     pointtype = pointformat(header)
+
+    @info "Reading $(n) '$(pointtype)' points"
     pointdata = Vector{pointtype}(undef, n)
     for i=1:n
+        i%1000000 == 0 && @info("Read $(i)/$(n) points")
         pointdata[i] = read(s, pointtype)
     end
     header, pointdata
@@ -41,10 +69,10 @@ end
 function load(s::Stream{format"LAS"}; mmap=false)
     skiplasf(s)
     header = read(s, LasHeader)
-
-    n = header.records_count
+    n = get_record_count(header)
     pointtype = pointformat(header)
 
+    @info "Reading $(n) '$(pointtype)' points"
     if mmap
         pointsize = Int(header.data_record_length)
         pointbytes = Mmap.mmap(s.io, Vector{UInt8}, n*pointsize, position(s))
@@ -52,6 +80,7 @@ function load(s::Stream{format"LAS"}; mmap=false)
     else
         pointdata = Vector{pointtype}(undef, n)
         for i=1:n
+            i%1000000 == 0 && @info("Read $(i)/$(n) points")
             pointdata[i] = read(s, pointtype)
         end
     end
@@ -61,8 +90,10 @@ end
 
 function load(f::File{format"LAZ"})
     # read las from laszip, which decompresses to stdout
-    open(`laszip -olas -stdout -i $(filename(f))`) do s
-        load(s)
+    open(`$(get_laszip_executable_path()) -olas -stdout -i $(filename(f))`) do s
+        h,p = load(s)
+        read(s)
+        return h, p
     end
 end
 
@@ -86,9 +117,11 @@ end
 
 function save(s::Stream{format"LAS"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
-    header_n = header.records_count
+    header_n = get_record_count(header)
     n = length(pointdata)
-    msg = "number of records in header ($header_n) does not match data length ($n)"
+    msg = "Number of records in header ($header_n) does not match data length ($n)"
+    @info "Writing $(n) '$(typeof(pointdata[1]))' points"
+
     @assert header_n == n msg
 
     # write header
@@ -103,7 +136,7 @@ end
 
 function save(f::File{format"LAZ"}, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # pipes las to laszip to write laz
-    open(`laszip -olaz -stdin -o $(filename(f))`, "w") do s
+    open(`$(get_laszip_executable_path()) -olaz -stdin -o $(filename(f))`, "w") do s
         savebuf(s, header, pointdata)
     end
 end
@@ -113,10 +146,11 @@ end
 # but it speeds up a lot when the result is piped to laszip.
 function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint})
     # checks
-    header_n = header.records_count
+    header_n = get_record_count(header)
     n = length(pointdata)
     msg = "number of records in header ($header_n) does not match data length ($n)"
     @assert header_n == n msg
+    @info "Writing $(n) '$(typeof(pointdata[1]))' points to LAZ file"
 
     # write header
     write(s, magic(format"LAS"))
@@ -125,7 +159,7 @@ function savebuf(s::IO, header::LasHeader, pointdata::AbstractVector{<:LasPoint}
     # 2048 points seemed to be an optimum for the libLAS_1.2.las testfile
     npoints_buffered = 2048
     bufsize = header.data_record_length * npoints_buffered
-    buf = IOBuffer(bufsize)
+    buf = IOBuffer(sizehint=bufsize)
     # write points
     for (i, p) in enumerate(pointdata)
         write(buf, p)
