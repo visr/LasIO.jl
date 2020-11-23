@@ -3,10 +3,8 @@ using Mmap
 function get_laszip_executable_path()
     if Sys.iswindows()
         return joinpath(dirname(@__DIR__), "resources", "laszip.exe")
-    elseif Sys.islinux()
+    else # point to the linux build of the executable
         return joinpath(dirname(@__DIR__), "resources", "laszip")
-    else
-        error("LasIO  with ZIP functionality is only suported for windows and linux!")
     end
 end
 
