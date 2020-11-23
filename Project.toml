@@ -1,5 +1,5 @@
 name = "LasIO"
-uuid = "73f23da9-1916-45be-95ff-8b812502714e"
+uuid = "570499db-eae3-5eb6-bdd5-a5326f375e68"
 keywords = ["LAS", "lidar", "IO"]
 license = "MIT"
 desc = "Read and write LAS lidar point cloud files"
