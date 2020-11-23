@@ -3,7 +3,7 @@
 ## [Unreleased]
 ## [0.4.0] - 2018-10-15
 ### Changed
-- Support all LAS/LAZ versions and point formats
+- Support all LAS/LAZ versions and point formats (without waveform data)
 
 ## [0.3.0] - 2018-10-15
 ### Changed

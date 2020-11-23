@@ -1,9 +1,7 @@
-|                          **Build Status**                          |
-|:------------------------------------------------------------------:|
-| [![Actions Status](https://github.com/msbahal/LasIO.jl/workflows/Linux/badge.svg)](https://github.com/msbahal/LasIO.jl/actions) [![Actions Status](https://github.com/msbahal/LasIO.jl/workflows/Windows/badge.svg)](https://github.com/msbahal/LasIO.jl/actions) |
-
-
 # LasIO
+
+[![Build Status](https://travis-ci.com/visr/LasIO.jl.svg?branch=master)](https://travis-ci.com/github/visr/LasIO.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/visr/LasIO.jl?svg=true&branch=master)](https://ci.appveyor.com/project/visr/lasio-jl/branch/master)
 
 Julia package for reading and writing the LAS lidar format.
 
