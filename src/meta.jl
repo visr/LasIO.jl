@@ -1,4 +1,11 @@
-"Generate read (unpack) method for structs."
+""""
+Generate read (unpack) method for structs.
+
+Approximately evaluates to:
+
+function Base.read(io::IO, t::Type{LasPoint0})
+    (LasPoint0)(read(io, Int32), read(io, Int32),...)
+"""
 function generate_read(T::Type)
     fc = fieldcount(T)
     types = [fieldtype(T, i) for i = 1:fc]
@@ -20,7 +27,17 @@ function generate_read(T::Type)
     eval(function_expression)
 end
 
-"Generate write (pack) method for structs."
+"""
+Generate write (pack) method for structs.
+
+Approximately evaluates to:
+
+function Base.write(io::IO, T::LasPoint0)
+    write(io, T.x)
+    write(io, T.y)
+    write(io, T.z)
+    ...)
+"""
 function generate_write(T::Type)
     # Create pack function expression
     function_expression = :(function Base.write(io::IO, T::$T) end)
@@ -47,7 +64,15 @@ function generate_io(T::Type)
     generate_write(T)
 end
 
-"""Generate IO expressions macro."""
+"""
+Generate IO expressions macro.
+
+Approximately evaluates to:
+generate_io(LasPoint0)
+
+call order
+gen_io -> generate_io -> generate_read/write
+"""
 macro gen_io(typ::Expr)
     T = typ.args[2]
     if isexpr(T, :(<:))
